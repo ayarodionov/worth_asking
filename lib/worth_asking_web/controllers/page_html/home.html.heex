@@ -1,0 +1,148 @@
+<Layouts.flash_group flash={@flash} />
+
+<div class="max-w-3xl mx-auto px-6 py-16 lg:py-24">
+  <%!-- Hero --%>
+  <div class="text-center mb-16">
+    <h1 class="text-4xl lg:text-5xl font-semibold tracking-tight mb-4" style="font-family: Georgia, serif;">
+      Worth Asking
+    </h1>
+    <p class="text-lg text-[#2F2F2F]/70 max-w-lg mx-auto">
+      Honest perspective from real women. No judgment. No games. Just clarity.
+    </p>
+  </div>
+
+  <%!-- Two clear paths --%>
+  <div class="grid md:grid-cols-2 gap-6 mb-16">
+    <%!-- Men: Ask a question --%>
+    <div class="bg-white border border-[#E4E6E3] rounded-lg p-8">
+      <p class="text-xs font-medium text-[#2F2F2F]/40 uppercase tracking-wider mb-3">For men</p>
+      <h2 class="text-2xl font-semibold mb-3" style="font-family: Georgia, serif;">
+        Ask a question
+      </h2>
+      <p class="text-[#2F2F2F]/60 text-sm mb-6 leading-relaxed">
+        Get thoughtful, anonymous responses from women about communication, dating, style, and first impressions.
+      </p>
+      <form action={~p"/questions/new"} method="get" class="mb-4">
+        <textarea
+          name="q"
+          rows="3"
+          placeholder="What's on your mind?"
+          class="w-full border border-[#E4E6E3] rounded-md p-3 text-sm resize-none focus:outline-none focus:border-[#6F8F9D] focus:ring-1 focus:ring-[#6F8F9D] bg-[#F7F7F5]"
+        ></textarea>
+        <button
+          type="submit"
+          class="mt-3 w-full bg-[#6F8F9D] text-white py-3 rounded-md text-sm font-medium hover:bg-[#5a7a87] transition-colors"
+        >
+          Get a second perspective
+        </button>
+      </form>
+      <p class="text-xs text-[#2F2F2F]/40 text-center">
+        or <a href={~p"/users/register"} class="text-[#6F8F9D] hover:underline">create an account</a> to get started
+      </p>
+    </div>
+
+    <%!-- Women: Become an advisor --%>
+    <div class="bg-[#A8BDA4]/10 border-2 border-[#A8BDA4] rounded-lg p-8">
+      <p class="text-xs font-medium text-[#6F8F6B] uppercase tracking-wider mb-3">For women</p>
+      <h2 class="text-2xl font-semibold mb-3" style="font-family: Georgia, serif;">
+        Become an advisor
+      </h2>
+      <p class="text-[#2F2F2F]/60 text-sm mb-6 leading-relaxed">
+        Share your perspective and get paid for thoughtful responses. Help men understand what they're missing.
+      </p>
+      <ul class="space-y-3 mb-6">
+        <li class="flex items-start gap-2 text-sm text-[#2F2F2F]/70">
+          <span class="text-[#6F8F6B] mt-0.5">&#10003;</span>
+          Respond on your own schedule
+        </li>
+        <li class="flex items-start gap-2 text-sm text-[#2F2F2F]/70">
+          <span class="text-[#6F8F6B] mt-0.5">&#10003;</span>
+          Earn money for each response
+        </li>
+        <li class="flex items-start gap-2 text-sm text-[#2F2F2F]/70">
+          <span class="text-[#6F8F6B] mt-0.5">&#10003;</span>
+          Stay completely anonymous
+        </li>
+      </ul>
+      <a
+        href={~p"/advisors/join"}
+        class="block w-full text-center bg-[#6F8F6B] text-white py-3 rounded-md text-sm font-medium hover:bg-[#5a7a57] transition-colors"
+      >
+        Apply to be an advisor
+      </a>
+    </div>
+  </div>
+
+  <%!-- Categories --%>
+  <div class="mb-16">
+    <h2 class="text-sm font-medium text-[#2F2F2F]/50 uppercase tracking-wider mb-6 text-center">
+      Topics you can ask about
+    </h2>
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div class="bg-white border border-[#E4E6E3] rounded-lg p-5 text-center">
+        <h3 class="font-medium mb-1">Communication</h3>
+        <p class="text-xs text-[#2F2F2F]/60">How to say what you mean</p>
+      </div>
+      <div class="bg-white border border-[#E4E6E3] rounded-lg p-5 text-center">
+        <h3 class="font-medium mb-1">First Impressions</h3>
+        <p class="text-xs text-[#2F2F2F]/60">How you come across</p>
+      </div>
+      <div class="bg-white border border-[#E4E6E3] rounded-lg p-5 text-center">
+        <h3 class="font-medium mb-1">Style</h3>
+        <p class="text-xs text-[#2F2F2F]/60">Presentation and grooming</p>
+      </div>
+      <div class="bg-white border border-[#E4E6E3] rounded-lg p-5 text-center">
+        <h3 class="font-medium mb-1">Dating Dynamics</h3>
+        <p class="text-xs text-[#2F2F2F]/60">Reading signals</p>
+      </div>
+    </div>
+  </div>
+
+  <%!-- Sample Q&A --%>
+  <div class="space-y-8">
+    <h2 class="text-sm font-medium text-[#2F2F2F]/50 uppercase tracking-wider text-center">
+      Example questions
+    </h2>
+
+    <div class="bg-white border border-[#E4E6E3] rounded-lg p-6">
+      <p class="font-medium mb-3">
+        "We had a great date but she hasn't texted in 2 days. Do I follow up?"
+      </p>
+      <div class="relative">
+        <p class="text-[#2F2F2F]/70 text-sm leading-relaxed response-blurred">
+          Two days isn't necessarily a negative signal. Some people slow down after a first date to reset
+          their pace. A simple follow-up is reasonable, but keep it light and not overly invested.
+        </p>
+        <div class="absolute inset-0 flex items-center justify-center">
+          <span class="bg-[#6F8F9D] text-white px-4 py-2 rounded-md text-sm font-medium">
+            Unlock responses
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <div class="bg-white border border-[#E4E6E3] rounded-lg p-6">
+      <p class="font-medium mb-3">
+        "Did I come off too strong?"
+      </p>
+      <div class="relative">
+        <p class="text-[#2F2F2F]/70 text-sm leading-relaxed response-blurred">
+          You showed interest, which isn't a problem. The only thing that might read as "too strong" is the
+          frequency of follow-up. Pulling back slightly could create a more balanced dynamic.
+        </p>
+        <div class="absolute inset-0 flex items-center justify-center">
+          <span class="bg-[#6F8F9D] text-white px-4 py-2 rounded-md text-sm font-medium">
+            Unlock responses
+          </span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <%!-- Footer --%>
+  <div class="mt-16 pt-8 border-t border-[#E4E6E3] text-center">
+    <p class="text-sm text-[#2F2F2F]/40">
+      A tool for perspective and clarity.
+    </p>
+  </div>
+</div>

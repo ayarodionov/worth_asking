@@ -1,0 +1,87 @@
+/* See the Tailwind configuration guide for advanced usage
+   https://tailwindcss.com/docs/configuration */
+
+@import "tailwindcss" source(none);
+@source "../css";
+@source "../js";
+@source "../../lib/worth_asking_web";
+
+/* A Tailwind plugin that makes "hero-#{ICON}" classes available.
+   The heroicons installation itself is managed by your mix.exs */
+@plugin "../vendor/heroicons";
+
+/* daisyUI Tailwind Plugin. You can update this file by fetching the latest version with:
+   curl -sLO https://github.com/saadeghi/daisyui/releases/latest/download/daisyui.js
+   Make sure to look at the daisyUI changelog: https://daisyui.com/docs/changelog/ */
+@plugin "../vendor/daisyui" {
+  themes: false;
+}
+
+/* Worth Asking - Light theme (single theme, no dark mode)
+   Brand colors:
+   Primary Blue (Trust): #6F8F9D
+   Sage Dark (Reflection): #6F8F6B
+   Sage Light: #A8BDA4
+   Text Charcoal: #2F2F2F
+   Background: #F7F7F5
+   UI Neutral: #E4E6E3
+*/
+@plugin "../vendor/daisyui-theme" {
+  name: "worth-asking";
+  default: true;
+  prefersdark: false;
+  color-scheme: "light";
+  --color-base-100: oklch(97.5% 0.003 100);
+  --color-base-200: oklch(93% 0.005 130);
+  --color-base-300: oklch(90% 0.007 130);
+  --color-base-content: oklch(25% 0.005 0);
+  --color-primary: oklch(62% 0.04 220);
+  --color-primary-content: oklch(98% 0.003 100);
+  --color-secondary: oklch(60% 0.05 145);
+  --color-secondary-content: oklch(98% 0.003 100);
+  --color-accent: oklch(75% 0.04 145);
+  --color-accent-content: oklch(25% 0.005 0);
+  --color-neutral: oklch(40% 0.01 0);
+  --color-neutral-content: oklch(98% 0 0);
+  --color-info: oklch(62% 0.04 220);
+  --color-info-content: oklch(98% 0.003 100);
+  --color-success: oklch(60% 0.05 145);
+  --color-success-content: oklch(98% 0.003 100);
+  --color-warning: oklch(75% 0.12 70);
+  --color-warning-content: oklch(25% 0.005 0);
+  --color-error: oklch(55% 0.2 25);
+  --color-error-content: oklch(98% 0.003 100);
+  --radius-selector: 0.375rem;
+  --radius-field: 0.375rem;
+  --radius-box: 0.5rem;
+  --size-selector: 0.25rem;
+  --size-field: 0.25rem;
+  --border: 1px;
+  --depth: 0;
+  --noise: 0;
+}
+
+/* Add variants based on LiveView classes */
+@custom-variant phx-click-loading (.phx-click-loading&, .phx-click-loading &);
+@custom-variant phx-submit-loading (.phx-submit-loading&, .phx-submit-loading &);
+@custom-variant phx-change-loading (.phx-change-loading&, .phx-change-loading &);
+
+/* Use the data attribute for dark mode  */
+@custom-variant dark (&:where([data-theme=dark], [data-theme=dark] *));
+
+/* Make LiveView wrapper divs transparent for layout */
+[data-phx-session], [data-phx-teleported-src] { display: contents }
+
+/* Worth Asking custom styles */
+
+/* Serif headlines */
+@theme {
+  --font-serif: "Georgia", "Times New Roman", serif;
+}
+
+/* Blurred response effect */
+.response-blurred {
+  filter: blur(6px);
+  user-select: none;
+  pointer-events: none;
+}

@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="worth-asking">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="csrf-token" content={get_csrf_token()} />
+    <.live_title default="Worth Asking" suffix=" - Get a second perspective">
+      {assigns[:page_title]}
+    </.live_title>
+    <link phx-track-static rel="stylesheet" href={~p"/assets/css/app.css"} />
+    <script defer phx-track-static type="text/javascript" src={~p"/assets/js/app.js"}>
+    </script>
+  </head>
+  <body class="bg-[#F7F7F5] text-[#2F2F2F] min-h-screen">
+    <nav class="w-full px-6 lg:px-12 py-4 flex items-center justify-between border-b border-[#E4E6E3]">
+      <a href={~p"/"} class="text-xl font-semibold tracking-tight text-[#2F2F2F]" style="font-family: Georgia, serif;">
+        Worth Asking
+      </a>
+      <div class="flex items-center gap-4 lg:gap-6 text-sm">
+        <%= if @current_scope && @current_scope.user do %>
+          <%= if @current_scope.user.role in [:contributor, :admin] do %>
+            <a href={~p"/dashboard"} class="hover:text-[#6F8F9D] transition-colors">Dashboard</a>
+          <% else %>
+            <a href={~p"/my-questions"} class="hover:text-[#6F8F9D] transition-colors">My Questions</a>
+          <% end %>
+          <%= if @current_scope.user.role == :admin do %>
+            <a href={~p"/admin"} class="hover:text-[#6F8F9D] transition-colors">Admin</a>
+          <% end %>
+          <a href={~p"/users/settings"} class="hover:text-[#6F8F9D] transition-colors">Settings</a>
+          <.link href={~p"/users/log-out"} method="delete" class="hover:text-[#6F8F9D] transition-colors">
+            Log out
+          </.link>
+        <% else %>
+          <a href={~p"/advisors/join"} class="text-[#6F8F6B] font-medium hover:underline transition-colors">
+            Become an advisor
+          </a>
+          <a href={~p"/users/register"} class="hover:text-[#6F8F9D] transition-colors">Sign up</a>
+          <a href={~p"/users/log-in"} class="bg-[#6F8F9D] text-white px-4 py-2 rounded-md hover:bg-[#5a7a87] transition-colors">
+            Log in
+          </a>
+        <% end %>
+      </div>
+    </nav>
+    {@inner_content}
+  </body>
+</html>
