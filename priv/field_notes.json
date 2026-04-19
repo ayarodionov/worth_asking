@@ -1,0 +1,162 @@
+[
+  {
+    "id": "1",
+    "slug": "when-she-stops-texting-after-a-great-date",
+    "title": "When she stops texting after a great date",
+    "situation": "The date went well. Conversation flowed. Now it's been 1\u20132 days with no message.",
+    "insight": "Silence doesn't always mean disinterest. People pull back for many reasons\u2014timing, uncertainty, or simply waiting to see what you do. The risk isn't reaching out. The risk is overcorrecting.",
+    "quick_reference": [
+      "Wait 24\u201348 hours",
+      "Send one follow-up",
+      "Keep it light, not emotional",
+      "Don't double text",
+      "If no reply \u2192 move on"
+    ],
+    "tags": ["texting", "first date", "dating"],
+    "is_premium": false
+  },
+  {
+    "id": "2",
+    "slug": "what-to-wear-on-a-first-date",
+    "title": "What to wear on a first date",
+    "situation": "You want to make a strong impression but don't want to look like you're trying too hard.",
+    "insight": "Attraction is often about ease. The goal isn't to impress\u2014it's to feel natural and put together. If you're adjusting your clothes all night, it's the wrong choice.",
+    "quick_reference": [
+      "Fit > brand",
+      "Keep it simple (1 strong piece max)",
+      "Clean shoes matter more than you think",
+      "Avoid anything distracting",
+      "Wear something you've worn before"
+    ],
+    "tags": ["style", "first date", "grooming"],
+    "is_premium": false
+  },
+  {
+    "id": "3",
+    "slug": "you-think-you-came-on-too-strong",
+    "title": "You think you came on too strong",
+    "situation": "After the interaction, you're replaying things and feel like you may have overdone it.",
+    "insight": "Overthinking after the fact is common. Most people don't remember intensity as much as they remember how they felt. Trying to \"fix it\" too quickly often makes it worse.",
+    "quick_reference": [
+      "Don't send a correction text immediately",
+      "Give space (24\u201348 hours)",
+      "Re-engage casually",
+      "Avoid apologizing unless clearly needed",
+      "Let the next interaction reset the tone"
+    ],
+    "tags": ["texting", "communication", "dating"],
+    "is_premium": false
+  },
+  {
+    "id": "4",
+    "slug": "what-to-text-after-a-first-date",
+    "title": "What to text after a first date",
+    "situation": "The date ended well. Now you're unsure what to say\u2014or when to say it.",
+    "insight": "The follow-up should match the tone of the date. You're not trying to escalate\u2014you're continuing the same energy.",
+    "quick_reference": [
+      "Send within 24 hours",
+      "Reference something specific from the date",
+      "Keep it short",
+      "Don't over-explain",
+      "Let the conversation build naturally"
+    ],
+    "tags": ["texting", "first date", "communication"],
+    "is_premium": false
+  },
+  {
+    "id": "5",
+    "slug": "youre-not-sure-if-shes-interested",
+    "title": "You're not sure if she's interested",
+    "situation": "Responses are inconsistent. Sometimes engaged, sometimes distant.",
+    "insight": "Interest shows up in consistency, not intensity. Mixed signals are often low or uncertain interest\u2014not a puzzle to solve.",
+    "quick_reference": [
+      "Match her effort, don't exceed it",
+      "Avoid chasing clarity too early",
+      "Give space and observe",
+      "Don't try to \"win her over\" through volume",
+      "If it feels one-sided, it probably is"
+    ],
+    "tags": ["dating", "communication", "texting"],
+    "is_premium": false
+  },
+  {
+    "id": "6",
+    "slug": "when-she-cancels-plans-last-minute",
+    "title": "When she cancels plans last minute",
+    "situation": "Plans were set. She cancels close to the time, often with a vague reason.",
+    "insight": "Interest doesn't disappear\u2014it shows up in effort. A cancellation without a clear reschedule is a signal, not an inconvenience.",
+    "quick_reference": [
+      "Don't chase a new time immediately",
+      "Respond calmly: \"No worries\"",
+      "Let her suggest the next plan",
+      "If she doesn't \u2192 move on",
+      "One cancel = data point, not a pattern (yet)"
+    ],
+    "tags": ["dating", "communication"],
+    "is_premium": false
+  },
+  {
+    "id": "7",
+    "slug": "how-often-you-should-text",
+    "title": "How often you should text",
+    "situation": "You're unsure how much communication is too much or too little.",
+    "insight": "There is no perfect frequency\u2014only matching energy. Over-texting usually comes from trying to secure interest instead of letting it develop.",
+    "quick_reference": [
+      "Match her pace",
+      "Don't text just to fill space",
+      "Leave gaps in conversation",
+      "Avoid constant check-ins",
+      "Let anticipation build"
+    ],
+    "tags": ["texting", "communication", "dating"],
+    "is_premium": false
+  },
+  {
+    "id": "8",
+    "slug": "when-conversation-feels-forced",
+    "title": "When conversation feels forced",
+    "situation": "You're running out of things to say, or it feels like work to keep it going.",
+    "insight": "Good connection doesn't require constant effort. If you're forcing conversation, you're likely trying to maintain something that isn't naturally there.",
+    "quick_reference": [
+      "Stop trying to \"save\" the conversation",
+      "Shift topics or end it naturally",
+      "Don't panic-fill silence",
+      "Let some interactions be short",
+      "Pay attention to how often this happens"
+    ],
+    "tags": ["communication", "in person", "dating"],
+    "is_premium": true
+  },
+  {
+    "id": "9",
+    "slug": "talking-about-past-relationships",
+    "title": "Talking about past relationships",
+    "situation": "The topic comes up early, and you're unsure how much to share.",
+    "insight": "Early conversations aren't about full disclosure\u2014they're about tone. Oversharing creates weight too soon; avoiding entirely can feel guarded.",
+    "quick_reference": [
+      "Keep it brief and neutral",
+      "No detailed stories",
+      "No emotional unloading",
+      "Avoid speaking negatively",
+      "Shift back to present quickly"
+    ],
+    "tags": ["communication", "first date", "relationships"],
+    "is_premium": true
+  },
+  {
+    "id": "10",
+    "slug": "when-she-takes-a-long-time-to-respond",
+    "title": "When she takes a long time to respond",
+    "situation": "Hours\u2014or days\u2014between replies. You're unsure if it means disinterest.",
+    "insight": "Response time reflects priority more than intention. People respond quickly to what they're excited about.",
+    "quick_reference": [
+      "Don't double text",
+      "Don't call it out",
+      "Match her response time loosely",
+      "Focus on your own pace",
+      "If it continues \u2192 lower investment"
+    ],
+    "tags": ["texting", "communication", "dating"],
+    "is_premium": true
+  }
+]

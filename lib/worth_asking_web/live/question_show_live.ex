@@ -2,145 +2,244 @@ defmodule WorthAskingWeb.QuestionShowLive do
   use WorthAskingWeb, :live_view
 
   alias WorthAsking.Questions
-  alias WorthAsking.Contributors
+
+  @max_perspectives 3
+  @max_followups 3
 
   @impl true
   def mount(%{"id" => id}, _session, socket) do
     question = Questions.get_question_with_responses!(id)
     user = socket.assigns.current_scope.user
-    paid = Questions.question_paid?(question.id, user.id)
 
-    if connected?(socket) do
-      Phoenix.PubSub.subscribe(WorthAsking.PubSub, "question:#{question.id}")
+    if question.user_id != user.id do
+      {:ok,
+       socket
+       |> put_flash(:error, "You can only view your own questions.")
+       |> redirect(to: ~p"/my-questions")}
+    else
+      if connected?(socket) do
+        Phoenix.PubSub.subscribe(WorthAsking.PubSub, "question:#{question.id}")
+      end
+
+      responses = Enum.take(question.responses, @max_perspectives)
+      followup_count = count_followups(question)
+
+      {:ok,
+       socket
+       |> assign(:page_title, "Your Perspectives")
+       |> assign(:question, question)
+       |> assign(:responses, responses)
+       |> assign(:total_expected, @max_perspectives)
+       |> assign(:followup_text, "")
+       |> assign(:followup_count, followup_count)
+       |> assign(:max_followups, @max_followups)
+       |> assign(:marked_helpful, false)
+       |> assign(:saved, false)}
     end
-
-    socket =
-      socket
-      |> assign(:page_title, "Your Question")
-      |> assign(:question, question)
-      |> assign(:paid, paid)
-      |> assign(:rating_submitted, MapSet.new())
-
-    {:ok, socket}
   end
 
   @impl true
   def render(assigns) do
     ~H"""
-    <div class="max-w-xl mx-auto px-6 py-12">
+    <div class="max-w-2xl mx-auto px-6 py-12">
+      <%!-- Back link --%>
       <a href={~p"/my-questions"} class="text-sm text-[#6F8F9D] hover:underline mb-8 inline-block">
         &larr; My questions
       </a>
 
-      <div class="bg-white border border-[#E4E6E3] rounded-lg p-6 mb-8">
-        <div class="flex items-center gap-2 mb-3">
-          <span class="text-xs font-medium px-2 py-1 rounded-full bg-[#A8BDA4]/20 text-[#6F8F6B]">
-            {format_category(@question.category)}
-          </span>
-          <span class={"text-xs font-medium px-2 py-1 rounded-full #{status_class(@question.status)}"}>
-            {@question.status |> to_string() |> String.capitalize()}
-          </span>
-        </div>
-        <p class="text-base font-medium">{@question.text}</p>
+      <%!-- Header --%>
+      <div class="mb-8">
+        <h1 class="text-2xl font-semibold text-[#2F2F2F] mb-1" style="font-family: Georgia, serif;">
+          Your perspectives
+        </h1>
+        <p class="text-sm text-[#2F2F2F]/50">
+          Three responses to your question
+        </p>
+      </div>
 
-        <%!-- Attached images --%>
+      <%!-- Original question --%>
+      <div class="mb-10 pb-8 border-b border-[#E4E6E3]">
+        <p class="text-xs text-[#2F2F2F]/40 uppercase tracking-wider mb-3">Your question</p>
+        <p class="text-lg text-[#2F2F2F] leading-relaxed" style="font-family: Georgia, serif;">
+          "{@question.text}"
+        </p>
         <div :if={@question.image_paths != []} class="flex gap-3 mt-4">
           <img
             :for={path <- @question.image_paths}
             src={path}
-            class="w-24 h-24 object-cover rounded-lg border border-[#E4E6E3]"
+            class="w-20 h-20 object-cover rounded-lg border border-[#E4E6E3]"
           />
         </div>
       </div>
 
-      <h2 class="text-sm font-medium text-[#2F2F2F]/50 uppercase tracking-wider mb-4">
-        Responses ({length(@question.responses)})
-      </h2>
-
-      <%= if @question.responses == [] do %>
-        <div class="text-center py-12 bg-white border border-[#E4E6E3] rounded-lg">
-          <p class="text-[#2F2F2F]/50">Waiting for responses from contributors...</p>
-        </div>
-      <% else %>
-        <div class="space-y-4">
-          <div :for={response <- @question.responses} class="bg-white border border-[#E4E6E3] rounded-lg p-6">
-            <%= if @paid do %>
-              <p class="text-sm leading-relaxed text-[#2F2F2F]/80 mb-4">{response.text}</p>
-
-              <%!-- Rating stars --%>
-              <div class="border-t border-[#E4E6E3] pt-3 mt-3">
-                <%= if MapSet.member?(@rating_submitted, response.id) do %>
-                  <p class="text-xs text-[#A8BDA4]">Thank you for your rating</p>
-                <% else %>
-                  <p class="text-xs text-[#2F2F2F]/40 mb-2">Rate this response</p>
-                  <div class="flex gap-1">
-                    <button
-                      :for={star <- 1..5}
-                      phx-click="rate"
-                      phx-value-response-id={response.id}
-                      phx-value-score={star}
-                      class="text-[#6F8F9D] hover:text-[#5a7a87] transition-colors"
-                    >
-                      <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                      </svg>
-                    </button>
-                  </div>
-                <% end %>
-              </div>
-            <% else %>
-              <div class="relative">
-                <p class="text-sm leading-relaxed response-blurred">{response.text}</p>
-                <div class="absolute inset-0 flex items-center justify-center">
-                  <a
-                    href={~p"/stripe/checkout/#{@question.id}"}
-                    class="bg-[#6F8F9D] text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-[#5a7a87] transition-colors"
-                  >
-                    Unlock responses
-                  </a>
-                </div>
-              </div>
-            <% end %>
+      <%!-- Loading state --%>
+      <%= if length(@responses) < @total_expected do %>
+        <div class="mb-6">
+          <div class="flex items-center gap-3 text-sm text-[#2F2F2F]/50">
+            <div class="w-4 h-4 border-2 border-[#A8BDA4] border-t-transparent rounded-full animate-spin"></div>
+            <span>{length(@responses)} of {@total_expected} perspectives ready</span>
           </div>
         </div>
       <% end %>
+
+      <%!-- Response cards --%>
+      <div class="space-y-6 mb-12">
+        <div
+          :for={{response, idx} <- Enum.with_index(@responses, 1)}
+          class="bg-white border border-[#E4E6E3] rounded-lg p-6"
+        >
+          <p class="text-xs font-medium text-[#2F2F2F]/40 uppercase tracking-wider mb-4">
+            Perspective {idx}
+          </p>
+          <p class="text-sm text-[#2F2F2F]/80 leading-relaxed whitespace-pre-line">
+            {response.text}
+          </p>
+        </div>
+
+        <%!-- Placeholder cards for missing perspectives --%>
+        <div
+          :for={idx <- (length(@responses) + 1)..@total_expected//1}
+          :if={length(@responses) < @total_expected}
+          class="border border-dashed border-[#E4E6E3] rounded-lg p-6"
+        >
+          <p class="text-xs font-medium text-[#2F2F2F]/20 uppercase tracking-wider mb-4">
+            Perspective {idx}
+          </p>
+          <div class="flex items-center gap-2 text-sm text-[#2F2F2F]/30">
+            <div class="w-3 h-3 border-2 border-[#E4E6E3] border-t-transparent rounded-full animate-spin"></div>
+            <span>Waiting for response...</span>
+          </div>
+        </div>
+      </div>
+
+      <%!-- Empty state (no responses at all) --%>
+      <%= if @responses == [] and length(@question.responses) == 0 do %>
+        <div class="text-center py-12 bg-white border border-[#E4E6E3] rounded-lg mb-12">
+          <p class="text-[#2F2F2F]/50 mb-1">Your question is out there.</p>
+          <p class="text-sm text-[#2F2F2F]/40">Perspectives are on their way. Check back soon.</p>
+        </div>
+      <% end %>
+
+      <%!-- Follow-up section --%>
+      <%= if @followup_count < @max_followups do %>
+        <div class="mb-12 pb-8 border-b border-[#E4E6E3]">
+          <p class="text-sm font-medium text-[#2F2F2F] mb-3">Add more context or ask a follow-up</p>
+          <.form for={%{}} phx-submit="send_followup" class="flex gap-3">
+            <input
+              type="text"
+              name="text"
+              value={@followup_text}
+              placeholder="e.g. What if we've only been on two dates?"
+              class="flex-1 border border-[#E4E6E3] rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:border-[#6F8F9D] focus:ring-1 focus:ring-[#6F8F9D] bg-white"
+            />
+            <button
+              type="submit"
+              class="bg-[#6F8F9D] text-white px-5 py-2.5 rounded-lg text-sm font-medium hover:bg-[#5a7a87] transition-colors"
+            >
+              Send
+            </button>
+          </.form>
+          <p class="text-xs text-[#2F2F2F]/30 mt-2">
+            {remaining_followups(@followup_count, @max_followups)} remaining
+          </p>
+        </div>
+      <% end %>
+
+      <%!-- Actions --%>
+      <div class="flex flex-wrap items-center gap-3">
+        <a
+          href={~p"/questions/new"}
+          class="bg-[#6F8F9D] text-white px-5 py-2.5 rounded-lg text-sm font-medium hover:bg-[#5a7a87] transition-colors"
+        >
+          Ask another question
+        </a>
+        <button
+          :if={not @saved}
+          phx-click="save"
+          class="border border-[#E4E6E3] text-[#2F2F2F]/70 px-5 py-2.5 rounded-lg text-sm font-medium hover:border-[#6F8F9D] transition-colors"
+        >
+          Save this
+        </button>
+        <span :if={@saved} class="text-sm text-[#A8BDA4]">
+          Saved
+        </span>
+        <button
+          :if={not @marked_helpful}
+          phx-click="mark_helpful"
+          class="border border-[#E4E6E3] text-[#2F2F2F]/70 px-5 py-2.5 rounded-lg text-sm font-medium hover:border-[#A8BDA4] transition-colors"
+        >
+          Mark helpful
+        </button>
+        <span :if={@marked_helpful} class="text-sm text-[#A8BDA4]">
+          Marked as helpful
+        </span>
+      </div>
     </div>
     """
   end
 
+  # --- Events ---
+
   @impl true
-  def handle_event("rate", %{"response-id" => response_id, "score" => score}, socket) do
-    user = socket.assigns.current_scope.user
-    response = Enum.find(socket.assigns.question.responses, &(&1.id == response_id))
-    {score_int, _} = Integer.parse(score)
+  def handle_event("send_followup", %{"text" => text}, socket) do
+    text = String.trim(text)
 
-    case Questions.rate_response(response, user, score_int) do
-      {:ok, _rating} ->
-        # Update contributor stats
-        if response.contributor_id do
-          Contributors.update_profile_stats(response.contributor_id)
-        end
+    if text == "" do
+      {:noreply, socket}
+    else
+      # For MVP, follow-ups create a new question linked to the original
+      user = socket.assigns.current_scope.user
+      original = socket.assigns.question
 
-        {:noreply,
-         socket
-         |> update(:rating_submitted, &MapSet.put(&1, response_id))}
+      attrs = %{
+        "text" => text,
+        "category" => to_string(original.category),
+        "image_paths" => []
+      }
 
-      {:error, _} ->
-        {:noreply, put_flash(socket, :error, "Could not save rating")}
+      case Questions.create_question(user, attrs) do
+        {:ok, _followup} ->
+          {:noreply,
+           socket
+           |> assign(:followup_text, "")
+           |> update(:followup_count, &(&1 + 1))
+           |> put_flash(:info, "Follow-up sent. You'll get new perspectives soon.")}
+
+        {:error, _} ->
+          {:noreply, put_flash(socket, :error, "Could not send follow-up. Try again.")}
+      end
     end
   end
 
   @impl true
+  def handle_event("save", _params, socket) do
+    {:noreply, assign(socket, :saved, true)}
+  end
+
+  @impl true
+  def handle_event("mark_helpful", _params, socket) do
+    {:noreply, assign(socket, :marked_helpful, true)}
+  end
+
+  # --- PubSub ---
+
+  @impl true
   def handle_info({:new_response, _response}, socket) do
     question = Questions.get_question_with_responses!(socket.assigns.question.id)
-    {:noreply, assign(socket, :question, question)}
+    responses = Enum.take(question.responses, @max_perspectives)
+
+    {:noreply,
+     socket
+     |> assign(:question, question)
+     |> assign(:responses, responses)}
   end
 
-  defp format_category(cat) do
-    cat |> to_string() |> String.replace("_", " ") |> String.split(" ") |> Enum.map(&String.capitalize/1) |> Enum.join(" ")
-  end
+  # --- Helpers ---
 
-  defp status_class(:pending), do: "bg-yellow-50 text-yellow-700"
-  defp status_class(:answered), do: "bg-blue-50 text-blue-700"
-  defp status_class(:paid), do: "bg-green-50 text-green-700"
+  defp count_followups(_question), do: 0
+
+  defp remaining_followups(count, max) do
+    remaining = max - count
+    if remaining == 1, do: "#{remaining} follow-up", else: "#{remaining} follow-ups"
+  end
 end

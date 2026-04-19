@@ -12,8 +12,8 @@ defmodule WorthAsking.Application do
       WorthAsking.Repo,
       {DNSCluster, query: Application.get_env(:worth_asking, :dns_cluster_query) || :ignore},
       {Phoenix.PubSub, name: WorthAsking.PubSub},
-      # Start a worker by calling: WorthAsking.Worker.start_link(arg)
-      # {WorthAsking.Worker, arg},
+      # Notification wave scheduler
+      WorthAsking.Notifications.Worker,
       # Start to serve requests, typically the last entry
       WorthAskingWeb.Endpoint
     ]

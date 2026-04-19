@@ -17,6 +17,7 @@
         Worth Asking
       </a>
       <div class="flex items-center gap-4 lg:gap-6 text-sm">
+        <a href="/field-notes" class="hover:text-[#6F8F9D] transition-colors">Field Notes</a>
         <%= if @current_scope && @current_scope.user do %>
           <%= if @current_scope.user.role in [:contributor, :admin] do %>
             <a href={~p"/dashboard"} class="hover:text-[#6F8F9D] transition-colors">Dashboard</a>

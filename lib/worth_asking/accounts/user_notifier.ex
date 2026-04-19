@@ -81,4 +81,57 @@ defmodule WorthAsking.Accounts.UserNotifier do
     ==============================
     """)
   end
+
+  @doc """
+  Notify a contributor that a new question is available.
+  """
+  def deliver_question_notification(user, question) do
+    category_label =
+      question.category
+      |> to_string()
+      |> String.replace("_", " ")
+      |> String.split(" ")
+      |> Enum.map(&String.capitalize/1)
+      |> Enum.join(" ")
+
+    session_label = String.capitalize(question.session_type || "basic")
+
+    deliver(user.email, "New question waiting for your perspective", """
+
+    ==============================
+
+    Hi,
+
+    A new #{category_label} question is waiting for your perspective.
+
+    Session type: #{session_label}
+
+    Log in to your dashboard to respond:
+    https://worthasking.com/dashboard
+
+    ==============================
+    """)
+  end
+
+  @doc """
+  Notify a contributor that their application was approved.
+  """
+  def deliver_approval_notification(user) do
+    deliver(user.email, "You've been approved as a Worth Asking advisor", """
+
+    ==============================
+
+    Congratulations!
+
+    Your application to become a Worth Asking advisor has been approved.
+
+    You can now log in to your dashboard and start responding to questions:
+    https://worthasking.com/dashboard
+
+    Remember to set your availability so you can receive notifications
+    when new questions come in.
+
+    ==============================
+    """)
+  end
 end

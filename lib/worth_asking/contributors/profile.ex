@@ -21,6 +21,15 @@ defmodule WorthAsking.Contributors.Profile do
     field :average_rating, :float
     field :avatar_path, :string
 
+    # Availability & session preferences
+    field :available_now, :boolean, default: false
+    field :available_until, :utc_datetime
+    field :accept_basic, :boolean, default: true
+    field :accept_interactive, :boolean, default: true
+    field :accept_fast, :boolean, default: false
+    field :active_session_count, :integer, default: 0
+    field :max_active_sessions, :integer, default: 2
+
     belongs_to :user, WorthAsking.Accounts.User
 
     timestamps(type: :utc_datetime)
@@ -56,8 +65,29 @@ defmodule WorthAsking.Contributors.Profile do
     end
   end
 
+  def availability_changeset(profile, attrs) do
+    profile
+    |> cast(attrs, [:available_now, :available_until, :accept_basic, :accept_interactive, :accept_fast])
+  end
+
   def stats_changeset(profile, attrs) do
     profile
     |> cast(attrs, [:average_rating, :response_count, :earnings_cents])
+  end
+
+  def available?(%__MODULE__{} = profile) do
+    profile.available_now &&
+      profile.application_status == :approved &&
+      profile.active_session_count < profile.max_active_sessions &&
+      (is_nil(profile.available_until) || DateTime.compare(profile.available_until, DateTime.utc_now()) == :gt)
+  end
+
+  def accepts_session_type?(%__MODULE__{} = profile, session_type) do
+    case session_type do
+      "basic" -> profile.accept_basic
+      "interactive" -> profile.accept_interactive
+      "fast" -> profile.accept_fast
+      _ -> profile.accept_basic
+    end
   end
 end

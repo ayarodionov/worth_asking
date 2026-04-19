@@ -3,29 +3,36 @@ defmodule WorthAskingWeb.ContributorDashboardLive do
 
   alias WorthAsking.Questions
   alias WorthAsking.Contributors
+  alias WorthAsking.Notifications
 
   @impl true
   def mount(_params, _session, socket) do
     user = socket.assigns.current_scope.user
     profile = Contributors.get_profile_by_user(user.id)
 
-    available_questions = Questions.list_available_questions_for_contributor(profile)
-    my_responses = Questions.list_responses_by_contributor(user.id)
+    unless profile do
+      {:ok,
+       socket
+       |> put_flash(:error, "You don't have a contributor profile.")
+       |> redirect(to: ~p"/")}
+    else
+      available_questions = Questions.list_available_questions_for_contributor(profile)
+      my_responses = Questions.list_responses_by_contributor(user.id)
 
-    if connected?(socket) do
-      for category <- profile.categories do
-        Phoenix.PubSub.subscribe(WorthAsking.PubSub, "questions:#{category}")
+      if connected?(socket) do
+        for category <- profile.categories do
+          Phoenix.PubSub.subscribe(WorthAsking.PubSub, "questions:#{category}")
+        end
+        Phoenix.PubSub.subscribe(WorthAsking.PubSub, "contributor:#{user.id}")
       end
+
+      {:ok,
+       socket
+       |> assign(:page_title, "Contributor Dashboard")
+       |> assign(:profile, profile)
+       |> assign(:available_questions, available_questions)
+       |> assign(:my_responses, my_responses)}
     end
-
-    socket =
-      socket
-      |> assign(:page_title, "Contributor Dashboard")
-      |> assign(:profile, profile)
-      |> assign(:available_questions, available_questions)
-      |> assign(:my_responses, my_responses)
-
-    {:ok, socket}
   end
 
   @impl true
@@ -46,6 +53,79 @@ defmodule WorthAskingWeb.ContributorDashboardLive do
           <p class="text-xl font-semibold text-[#2F2F2F]">
             ${format_cents(@profile.earnings_cents)}
           </p>
+        </div>
+      </div>
+
+      <%!-- Availability toggle --%>
+      <div class="bg-white border border-[#E4E6E3] rounded-lg p-6 mb-8">
+        <div class="flex items-center justify-between mb-4">
+          <div>
+            <p class="font-medium text-[#2F2F2F]">Availability</p>
+            <p class="text-xs text-[#2F2F2F]/50 mt-0.5">
+              <%= if @profile.available_now do %>
+                You're available
+                <%= if @profile.available_until do %>
+                  &mdash; auto-expires {format_expiry(@profile.available_until)}
+                <% end %>
+              <% else %>
+                You're currently offline
+              <% end %>
+            </p>
+          </div>
+          <button
+            phx-click="toggle_availability"
+            class={[
+              "relative inline-flex h-7 w-12 items-center rounded-full transition-colors",
+              if(@profile.available_now, do: "bg-[#6F8F6B]", else: "bg-[#E4E6E3]")
+            ]}
+          >
+            <span class={[
+              "inline-block h-5 w-5 transform rounded-full bg-white transition-transform shadow-sm",
+              if(@profile.available_now, do: "translate-x-6", else: "translate-x-1")
+            ]} />
+          </button>
+        </div>
+
+        <div class="border-t border-[#E4E6E3] pt-4">
+          <p class="text-xs text-[#2F2F2F]/50 uppercase tracking-wider mb-3">Session types</p>
+          <div class="flex flex-wrap gap-2">
+            <button
+              phx-click="toggle_session_type"
+              phx-value-type="basic"
+              class={[
+                "px-3 py-1.5 rounded-full text-xs font-medium border transition-colors",
+                if(@profile.accept_basic,
+                  do: "bg-[#A8BDA4]/20 border-[#A8BDA4] text-[#6F8F6B]",
+                  else: "bg-white border-[#E4E6E3] text-[#2F2F2F]/40")
+              ]}
+            >
+              Basic
+            </button>
+            <button
+              phx-click="toggle_session_type"
+              phx-value-type="interactive"
+              class={[
+                "px-3 py-1.5 rounded-full text-xs font-medium border transition-colors",
+                if(@profile.accept_interactive,
+                  do: "bg-[#A8BDA4]/20 border-[#A8BDA4] text-[#6F8F6B]",
+                  else: "bg-white border-[#E4E6E3] text-[#2F2F2F]/40")
+              ]}
+            >
+              Interactive
+            </button>
+            <button
+              phx-click="toggle_session_type"
+              phx-value-type="fast"
+              class={[
+                "px-3 py-1.5 rounded-full text-xs font-medium border transition-colors",
+                if(@profile.accept_fast,
+                  do: "bg-[#A8BDA4]/20 border-[#A8BDA4] text-[#6F8F6B]",
+                  else: "bg-white border-[#E4E6E3] text-[#2F2F2F]/40")
+              ]}
+            >
+              Fast Perspective
+            </button>
+          </div>
         </div>
       </div>
 
@@ -117,9 +197,65 @@ defmodule WorthAskingWeb.ContributorDashboardLive do
   end
 
   @impl true
+  def handle_event("toggle_availability", _params, socket) do
+    profile = socket.assigns.profile
+    new_available = !profile.available_now
+
+    case Notifications.toggle_availability(profile, new_available) do
+      {:ok, updated_profile} ->
+        {:noreply, assign(socket, :profile, updated_profile)}
+
+      {:error, _} ->
+        {:noreply, put_flash(socket, :error, "Could not update availability.")}
+    end
+  end
+
+  @impl true
+  def handle_event("toggle_session_type", %{"type" => type}, socket) do
+    profile = socket.assigns.profile
+
+    attrs =
+      case type do
+        "basic" -> %{accept_basic: !profile.accept_basic}
+        "interactive" -> %{accept_interactive: !profile.accept_interactive}
+        "fast" -> %{accept_fast: !profile.accept_fast}
+        _ -> %{}
+      end
+
+    case Notifications.update_session_preferences(profile, attrs) do
+      {:ok, updated_profile} ->
+        {:noreply, assign(socket, :profile, updated_profile)}
+
+      {:error, _} ->
+        {:noreply, put_flash(socket, :error, "Could not update preferences.")}
+    end
+  end
+
+  @impl true
   def handle_info({:new_question, question}, socket) do
     updated = [question | socket.assigns.available_questions]
     {:noreply, assign(socket, :available_questions, updated)}
+  end
+
+  @impl true
+  def handle_info({:new_question_alert, question}, socket) do
+    updated = [question | socket.assigns.available_questions]
+    {:noreply,
+     socket
+     |> assign(:available_questions, updated)
+     |> put_flash(:info, "New question available!")}
+  end
+
+  defp format_expiry(nil), do: ""
+  defp format_expiry(datetime) do
+    diff = DateTime.diff(datetime, DateTime.utc_now(), :minute)
+
+    cond do
+      diff <= 0 -> "expired"
+      diff < 60 -> "in #{diff}m"
+      diff < 1440 -> "in #{div(diff, 60)}h"
+      true -> Calendar.strftime(datetime, "%b %d at %I:%M %p")
+    end
   end
 
   defp format_cents(nil), do: "0.00"

@@ -3,6 +3,7 @@ defmodule WorthAskingWeb.ContributorResponseLive do
 
   alias WorthAsking.Questions
   alias WorthAsking.Contributors
+  alias WorthAsking.Notifications
 
   @impl true
   def mount(%{"question_id" => question_id}, _session, socket) do
@@ -118,6 +119,11 @@ defmodule WorthAskingWeb.ContributorResponseLive do
 
       case Questions.create_response(question, user, %{"text" => trimmed}) do
         {:ok, _response} ->
+          # Release session lock if assigned
+          if profile = socket.assigns.profile do
+            Notifications.release_session(profile)
+          end
+
           {:noreply,
            socket
            |> put_flash(:info, "Response submitted successfully!")

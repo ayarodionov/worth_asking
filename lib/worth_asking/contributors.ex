@@ -69,6 +69,26 @@ defmodule WorthAsking.Contributors do
     |> Repo.all()
   end
 
+  def update_availability(profile, attrs) do
+    profile
+    |> Profile.availability_changeset(attrs)
+    |> Repo.update()
+  end
+
+  def list_available_for_category(category, session_type) do
+    category_str = to_string(category)
+
+    Profile
+    |> where([p], p.application_status == :approved and p.available_now == true)
+    |> Repo.all()
+    |> Enum.filter(fn p ->
+      category_str in Enum.map(p.categories, &to_string/1) &&
+        Profile.accepts_session_type?(p, session_type) &&
+        Profile.available?(p)
+    end)
+    |> Enum.sort_by(& &1.response_count)
+  end
+
   def update_profile_stats(user_id) do
     profile = Repo.get_by!(Profile, user_id: user_id)
 

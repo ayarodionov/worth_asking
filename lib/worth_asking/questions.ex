@@ -47,6 +47,11 @@ defmodule WorthAsking.Questions do
           {:new_question, question}
         )
 
+        # Trigger notification pipeline
+        Task.start(fn ->
+          WorthAsking.Notifications.notify_for_question(question)
+        end)
+
         {:ok, question}
 
       error ->
