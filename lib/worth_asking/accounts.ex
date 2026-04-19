@@ -76,8 +76,14 @@ defmodule WorthAsking.Accounts do
   """
   def register_user(attrs) do
     %User{}
-    |> User.email_changeset(attrs)
+    |> User.registration_changeset(attrs)
     |> Repo.insert()
+  end
+
+  def update_user_phone(user, phone) do
+    user
+    |> Ecto.Changeset.change(%{phone: phone})
+    |> Repo.update()
   end
 
   ## Settings

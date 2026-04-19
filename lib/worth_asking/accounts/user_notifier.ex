@@ -9,12 +9,18 @@ defmodule WorthAsking.Accounts.UserNotifier do
     email =
       new()
       |> to(recipient)
-      |> from({"WorthAsking", "contact@example.com"})
+      |> from({"Worth Asking", System.get_env("MAIL_FROM", "onboarding@resend.dev")})
       |> subject(subject)
       |> text_body(body)
 
-    with {:ok, _metadata} <- Mailer.deliver(email) do
-      {:ok, email}
+    case Mailer.deliver(email) do
+      {:ok, _metadata} ->
+        {:ok, email}
+
+      {:error, reason} ->
+        require Logger
+        Logger.error("Failed to deliver email to #{recipient}: #{inspect(reason)}")
+        {:error, reason}
     end
   end
 

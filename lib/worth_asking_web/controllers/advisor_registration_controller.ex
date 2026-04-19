@@ -15,7 +15,10 @@ defmodule WorthAskingWeb.AdvisorRegistrationController do
     end
   end
 
-  def create(conn, %{"user" => %{"email" => email}}) do
+  def create(conn, %{"user" => user_params}) do
+    email = user_params["email"]
+    phone = user_params["phone"]
+
     # If already logged in, skip straight to the application
     if conn.assigns.current_scope && conn.assigns.current_scope.user do
       conn
@@ -23,7 +26,11 @@ defmodule WorthAskingWeb.AdvisorRegistrationController do
     else
       case Accounts.get_user_by_email(email) do
         %User{} = user ->
-          # Existing user — send magic link, set return path to application
+          # Existing user — update phone if provided, send magic link
+          if phone && phone != "" do
+            Accounts.update_user_phone(user, phone)
+          end
+
           Accounts.deliver_login_instructions(
             user,
             &url(~p"/users/log-in/#{&1}")
@@ -35,8 +42,8 @@ defmodule WorthAskingWeb.AdvisorRegistrationController do
           |> redirect(to: ~p"/advisors/join")
 
         nil ->
-          # New user — register and send magic link
-          case Accounts.register_user(%{email: email}) do
+          # New user — register with phone and send magic link
+          case Accounts.register_user(%{email: email, phone: phone}) do
             {:ok, user} ->
               Accounts.deliver_login_instructions(
                 user,

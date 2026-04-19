@@ -10,6 +10,7 @@ defmodule WorthAsking.Accounts.User do
     field :hashed_password, :string, redact: true
     field :confirmed_at, :utc_datetime
     field :authenticated_at, :utc_datetime, virtual: true
+    field :phone, :string
     field :role, Ecto.Enum, values: [:asker, :contributor, :admin], default: :asker
 
     timestamps(type: :utc_datetime)
@@ -23,9 +24,10 @@ defmodule WorthAsking.Accounts.User do
 
   def registration_changeset(user, attrs, opts \\ []) do
     user
-    |> cast(attrs, [:email, :role])
+    |> cast(attrs, [:email, :phone, :role])
     |> validate_email(opts)
     |> validate_inclusion(:role, [:asker, :contributor])
+    |> validate_format(:phone, ~r/^\+?[\d\s\-\(\)]{7,20}$/, message: "must be a valid phone number")
   end
 
   defp validate_email(changeset, opts) do

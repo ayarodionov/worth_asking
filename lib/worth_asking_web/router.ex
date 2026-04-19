@@ -32,6 +32,7 @@ defmodule WorthAskingWeb.Router do
 
     live_session :public, on_mount: [{WorthAskingWeb.UserAuth, :mount_current_scope}] do
       live "/welcome", OnboardingLive
+      live "/about", AboutLive
       live "/field-notes", FieldNotesLive
       live "/field-notes/:slug", FieldNoteShowLive
       live "/contributors/apply", ContributorApplyLive
