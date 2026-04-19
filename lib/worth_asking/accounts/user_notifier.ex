@@ -120,24 +120,67 @@ defmodule WorthAsking.Accounts.UserNotifier do
   end
 
   @doc """
-  Notify a contributor that their application was approved.
+  Notify a contributor that their application was approved, with onboarding link.
   """
-  def deliver_approval_notification(user) do
-    deliver(user.email, "You've been approved as a Worth Asking advisor", """
+  def deliver_approval_notification(user, onboarding_url) do
+    first_name = user.first_name || user.email
 
-    ==============================
+    deliver(user.email, "You're invited to join Worth Asking as a Contributor", """
+    Hi #{first_name},
 
-    Congratulations!
+    We reviewed your application and would like to invite you to join Worth Asking as a Contributor.
 
-    Your application to become a Worth Asking advisor has been approved.
+    Worth Asking connects men with real, thoughtful perspectives from women — without social pressure, awkwardness, or personal consequences. Your role is to offer clear, honest insight based on your experience and judgment.
 
-    You can now log in to your dashboard and start responding to questions:
-    https://worthasking.com/dashboard
 
-    Remember to set your availability so you can receive notifications
-    when new questions come in.
+    NEXT STEP — SET UP YOUR PROFILE
 
-    ==============================
+    To begin, please complete your onboarding here:
+
+    #{onboarding_url}
+
+    You'll be asked to:
+
+      - Enter your phone number to receive text alerts when questions are sent to you
+      - Add your payment details for weekly payouts
+      - Confirm your availability and participation preferences
+
+
+    HOW IT WORKS
+
+    When a question is routed to you, you'll receive a text notification. You can choose to respond or ignore — there's no obligation to answer every question.
+
+    Contributors are paid for accepted responses. Payments are issued weekly.
+
+
+    GUIDELINES FOR RESPONSES
+
+    We're not looking for perfection — we're looking for clarity and honesty.
+
+      - Be direct, but not harsh
+      - Be helpful, not performative
+      - Answer as if you're speaking to someone who genuinely wants to understand
+      - Avoid over-explaining or "teaching a lesson" — keep it grounded and real
+      - Speak from your perspective, not as a universal authority
+
+
+    SAFETY + BOUNDARIES
+
+    We've built safeguards to protect both contributors and users:
+
+      - You remain anonymous at all times
+      - No direct messaging or ongoing conversations
+      - Questions are screened before being sent out
+      - You can skip any question, for any reason
+      - Content moderation is in place to filter inappropriate or unsafe submissions
+
+    This is not therapy, coaching, or emotional labor. It's perspective — offered cleanly, and without obligation.
+
+    If you have any questions before getting started, you can reply directly to this email.
+
+    We're glad to have you.
+
+    — Worth Asking
     """)
   end
 end

@@ -2,6 +2,7 @@ defmodule WorthAskingWeb.Admin.AdminApplicationsLive do
   use WorthAskingWeb, :live_view
 
   alias WorthAsking.Contributors
+  alias WorthAsking.Accounts
 
   @impl true
   def mount(_params, _session, socket) do
@@ -185,13 +186,20 @@ defmodule WorthAskingWeb.Admin.AdminApplicationsLive do
     profile = Enum.find(socket.assigns.applications, &(&1.id == profile_id))
 
     case Contributors.approve_contributor(profile) do
-      {:ok, _profile} ->
+      {:ok, approved_profile} ->
+        # Send approval email with onboarding magic link
+        user = approved_profile.user
+        Accounts.deliver_approval_notification(
+          user,
+          &(WorthAskingWeb.Endpoint.url() <> "/users/log-in/#{&1}")
+        )
+
         applications = Contributors.list_pending_applications()
 
         {:noreply,
          socket
          |> assign(:applications, applications)
-         |> put_flash(:info, "#{profile.display_name} approved.")}
+         |> put_flash(:info, "#{profile.display_name} approved. Onboarding email sent.")}
 
       {:error, _changeset} ->
         {:noreply, put_flash(socket, :error, "Failed to approve application.")}

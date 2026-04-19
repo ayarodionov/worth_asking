@@ -51,6 +51,21 @@ defmodule WorthAsking.Contributors do
     )
     |> Repo.transaction()
     |> case do
+      {:ok, %{profile: profile}} -> {:ok, Repo.preload(profile, :user)}
+      {:error, _step, changeset, _changes} -> {:error, changeset}
+    end
+  end
+
+  def complete_onboarding(%Profile{} = profile, attrs, user, user_attrs) do
+    user_changeset =
+      user
+      |> Ecto.Changeset.change(user_attrs)
+
+    Multi.new()
+    |> Multi.update(:user, user_changeset)
+    |> Multi.update(:profile, Profile.onboarding_changeset(profile, Map.put(attrs, "onboarding_completed", true)))
+    |> Repo.transaction()
+    |> case do
       {:ok, %{profile: profile}} -> {:ok, profile}
       {:error, _step, changeset, _changes} -> {:error, changeset}
     end

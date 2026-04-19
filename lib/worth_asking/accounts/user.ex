@@ -11,6 +11,8 @@ defmodule WorthAsking.Accounts.User do
     field :confirmed_at, :utc_datetime
     field :authenticated_at, :utc_datetime, virtual: true
     field :phone, :string
+    field :first_name, :string
+    field :last_name, :string
     field :role, Ecto.Enum, values: [:asker, :contributor, :admin], default: :asker
 
     timestamps(type: :utc_datetime)

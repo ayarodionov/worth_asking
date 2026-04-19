@@ -10,12 +10,17 @@ defmodule WorthAskingWeb.ContributorDashboardLive do
     user = socket.assigns.current_scope.user
     profile = Contributors.get_profile_by_user(user.id)
 
-    unless profile do
-      {:ok,
-       socket
-       |> put_flash(:error, "You don't have a contributor profile.")
-       |> redirect(to: ~p"/")}
-    else
+    cond do
+      is_nil(profile) ->
+        {:ok,
+         socket
+         |> put_flash(:error, "You don't have a contributor profile.")
+         |> redirect(to: ~p"/")}
+
+      not profile.onboarding_completed ->
+        {:ok, push_navigate(socket, to: ~p"/contributors/onboarding")}
+
+      true ->
       available_questions = Questions.list_available_questions_for_contributor(profile)
       my_responses = Questions.list_responses_by_contributor(user.id)
 

@@ -20,6 +20,12 @@ defmodule WorthAsking.Contributors.Profile do
     field :response_count, :integer, default: 0
     field :average_rating, :float
     field :avatar_path, :string
+    field :age_range, :string
+    field :location, :string
+    field :onboarding_completed, :boolean, default: false
+    field :sms_opt_in, :boolean, default: false
+    field :availability_preference, :string, default: "anytime"
+    field :agreed_to_terms, :boolean, default: false
 
     # Availability & session preferences
     field :available_now, :boolean, default: false
@@ -63,6 +69,20 @@ defmodule WorthAsking.Contributors.Profile do
       _ ->
         add_error(changeset, :sample_responses, "must include at least 2 sample responses")
     end
+  end
+
+  def onboarding_changeset(profile, attrs) do
+    profile
+    |> cast(attrs, [
+      :display_name, :bio, :age_range, :location, :avatar_path,
+      :sms_opt_in, :availability_preference, :agreed_to_terms, :onboarding_completed
+    ])
+    |> validate_required([:display_name, :agreed_to_terms])
+    |> validate_length(:display_name, min: 2, max: 50)
+    |> validate_length(:bio, max: 500)
+    |> validate_inclusion(:age_range, ["18-24", "25-34", "35-44", "45-54", "55+"])
+    |> validate_inclusion(:availability_preference, ["anytime", "daytime", "evenings", "limited"])
+    |> validate_acceptance(:agreed_to_terms)
   end
 
   def availability_changeset(profile, attrs) do

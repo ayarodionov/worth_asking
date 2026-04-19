@@ -280,6 +280,16 @@ defmodule WorthAsking.Accounts do
   end
 
   @doc """
+  Delivers the approval notification with an onboarding magic link.
+  """
+  def deliver_approval_notification(%User{} = user, onboarding_url_fun)
+      when is_function(onboarding_url_fun, 1) do
+    {encoded_token, user_token} = UserToken.build_email_token(user, "login")
+    Repo.insert!(user_token)
+    UserNotifier.deliver_approval_notification(user, onboarding_url_fun.(encoded_token))
+  end
+
+  @doc """
   Deletes the signed token with the given context.
   """
   def delete_user_session_token(token) do

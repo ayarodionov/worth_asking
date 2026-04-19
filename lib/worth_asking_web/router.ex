@@ -95,6 +95,8 @@ defmodule WorthAskingWeb.Router do
 
     live_session :contributor,
       on_mount: [{WorthAskingWeb.UserAuth, :require_contributor}] do
+      live "/contributors/onboarding", ContributorOnboardingLive
+      live "/contributors/guidelines", ContributorGuidelinesLive
       live "/dashboard", ContributorDashboardLive
       live "/dashboard/respond/:question_id", ContributorResponseLive
     end
