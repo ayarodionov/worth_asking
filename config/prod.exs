@@ -20,6 +20,9 @@ config :worth_asking, WorthAskingWeb.Endpoint,
     ]
   ]
 
+# Session cookie domain — allows cookie sharing between www and non-www
+config :worth_asking, session_cookie_domain: ".worthaskingapp.com"
+
 # Configure Swoosh API Client
 config :swoosh, api_client: Swoosh.ApiClient.Req
 

@@ -9,7 +9,11 @@ defmodule WorthAskingWeb.Endpoint do
     key: "_worth_asking_key",
     signing_salt: "U4e7xo5R",
     same_site: "Lax"
-  ]
+  ] ++ (if Application.compile_env(:worth_asking, :session_cookie_domain) do
+    [domain: Application.compile_env(:worth_asking, :session_cookie_domain)]
+  else
+    []
+  end)
 
   socket "/live", Phoenix.LiveView.Socket,
     websocket: [connect_info: [session: @session_options]],
