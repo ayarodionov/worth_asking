@@ -102,7 +102,7 @@ defmodule WorthAskingWeb.ContributorApplyLive do
       {:ok,
        socket
        |> put_flash(:error, "Please enter your email to apply.")
-       |> redirect(to: ~p"/advisors/join")}
+       |> redirect(to: ~p"/contributors/join")}
     else
       # Check if this email already has a pending or approved application
       alias WorthAsking.Accounts
@@ -134,7 +134,7 @@ defmodule WorthAskingWeb.ContributorApplyLive do
 
           {:ok,
            socket
-           |> assign(:page_title, "Become an Advisor")
+           |> assign(:page_title, "Become a Contributor")
            |> assign(:applicant_email, email)
            |> assign(:total_steps, @total_steps)
            |> assign(:step, 1)
@@ -218,7 +218,7 @@ defmodule WorthAskingWeb.ContributorApplyLive do
           </div>
 
           <div>
-            <label class="block text-sm font-medium text-[#2F2F2F] mb-2">Why do you want to be an advisor?</label>
+            <label class="block text-sm font-medium text-[#2F2F2F] mb-2">Why do you want to be a contributor?</label>
             <textarea
               name="motivation"
               rows="3"
@@ -505,7 +505,7 @@ defmodule WorthAskingWeb.ContributorApplyLive do
             Application submitted
           </h1>
           <p class="text-sm text-[#2F2F2F]/60 mb-3 max-w-md mx-auto">
-            Thank you for taking the time to apply. We review every application carefully to maintain the quality of our advisor community.
+            Thank you for taking the time to apply. We review every application carefully to maintain the quality of our contributor community.
           </p>
           <p class="text-sm text-[#2F2F2F]/60 mb-8 max-w-md mx-auto">
             You'll receive an email within 48 hours with our decision.
@@ -560,7 +560,7 @@ defmodule WorthAskingWeb.ContributorApplyLive do
         {:noreply, assign(socket, :error, "Please write a bit more about yourself (at least a couple sentences).")}
 
       String.length(motivation) < 20 ->
-        {:noreply, assign(socket, :error, "Please share more about why you want to be an advisor.")}
+        {:noreply, assign(socket, :error, "Please share more about why you want to be a contributor.")}
 
       categories == [] ->
         {:noreply, assign(socket, :error, "Please select at least one category.")}

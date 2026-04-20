@@ -109,7 +109,7 @@ defmodule WorthAskingWeb.OnboardingLive do
               Real people. Vetted perspectives.
             </p>
             <p class="text-[#2F2F2F]/60 leading-relaxed mb-2">
-              Every advisor is reviewed before they can respond.
+              Every contributor is reviewed before they can respond.
             </p>
             <p class="text-[#2F2F2F]/60 leading-relaxed">
               No bots. No recycled content. Just honest perspective from women who've been through it.
@@ -132,7 +132,7 @@ defmodule WorthAskingWeb.OnboardingLive do
                 <div class="w-7 h-7 rounded-full bg-[#A8BDA4]/20 flex items-center justify-center flex-shrink-0 mt-0.5">
                   <span class="text-xs font-semibold text-[#6F8F6B]">2</span>
                 </div>
-                <p class="text-sm text-[#2F2F2F]/70">Your question is sent to vetted advisors in the relevant category</p>
+                <p class="text-sm text-[#2F2F2F]/70">Your question is sent to vetted contributors in the relevant category</p>
               </div>
               <div class="flex items-start gap-4">
                 <div class="w-7 h-7 rounded-full bg-[#A8BDA4]/20 flex items-center justify-center flex-shrink-0 mt-0.5">

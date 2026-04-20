@@ -71,7 +71,7 @@ defmodule WorthAskingWeb.Admin.AdminApplicationsLive do
               <%!-- Motivation --%>
               <%= if get_motivation(profile) do %>
                 <div class="mb-4">
-                  <p class="text-xs text-[#2F2F2F]/50 uppercase tracking-wide mb-1">Why they want to be an advisor</p>
+                  <p class="text-xs text-[#2F2F2F]/50 uppercase tracking-wide mb-1">Why they want to be a contributor</p>
                   <p class="text-sm text-[#2F2F2F]/80 italic">{get_motivation(profile)}</p>
                 </div>
               <% end %>

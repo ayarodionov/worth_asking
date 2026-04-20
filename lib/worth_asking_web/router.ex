@@ -22,8 +22,8 @@ defmodule WorthAskingWeb.Router do
     pipe_through :browser
 
     get "/", PageController, :home
-    get "/advisors/join", AdvisorRegistrationController, :new
-    post "/advisors/join", AdvisorRegistrationController, :create
+    get "/contributors/join", AdvisorRegistrationController, :new
+    post "/contributors/join", AdvisorRegistrationController, :create
   end
 
   # Public LiveView routes

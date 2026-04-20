@@ -4,7 +4,7 @@
       <span class="text-[#6F8F6B] text-2xl">&#9734;</span>
     </div>
     <h1 class="text-3xl font-semibold tracking-tight mb-3" style="font-family: Georgia, serif;">
-      Become an advisor
+      Become a contributor
     </h1>
     <p class="text-[#2F2F2F]/60 max-w-sm mx-auto">
       Share your perspective, help men understand what they're missing, and earn money doing it.
@@ -43,7 +43,7 @@
       </div>
     </div>
 
-    <.form :let={f} for={@changeset} action={~p"/advisors/join"}>
+    <.form :let={f} for={@changeset} action={~p"/contributors/join"}>
       <.input
         field={f[:email]}
         type="email"
