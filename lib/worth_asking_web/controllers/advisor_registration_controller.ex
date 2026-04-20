@@ -13,9 +13,8 @@ defmodule WorthAskingWeb.AdvisorRegistrationController do
     email = String.trim(email)
 
     if email != "" and String.contains?(email, "@") do
-      conn
-      |> put_session(:applicant_email, email)
-      |> redirect(to: ~p"/contributors/apply")
+      token = Phoenix.Token.sign(conn, "applicant_email", email)
+      redirect(conn, to: ~p"/contributors/apply?token=#{token}")
     else
       changeset =
         %User{}

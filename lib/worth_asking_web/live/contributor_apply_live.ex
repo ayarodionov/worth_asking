@@ -87,10 +87,18 @@ defmodule WorthAskingWeb.ContributorApplyLive do
   @total_steps 4
 
   @impl true
-  def mount(_params, session, socket) do
-    applicant_email = session["applicant_email"]
+  def mount(params, _session, socket) do
+    token = params["token"]
 
-    unless applicant_email do
+    email =
+      if token do
+        case Phoenix.Token.verify(socket, "applicant_email", token, max_age: 3600) do
+          {:ok, email} -> email
+          _ -> nil
+        end
+      end
+
+    unless email do
       {:ok,
        socket
        |> put_flash(:error, "Please enter your email to apply.")
@@ -102,7 +110,7 @@ defmodule WorthAskingWeb.ContributorApplyLive do
       {:ok,
        socket
        |> assign(:page_title, "Become an Advisor")
-       |> assign(:applicant_email, applicant_email)
+       |> assign(:applicant_email, email)
        |> assign(:total_steps, @total_steps)
        |> assign(:step, 1)
        |> assign(:display_name, "")
