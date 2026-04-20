@@ -79,9 +79,7 @@ defmodule WorthAskingWeb.MyQuestionsLive do
     {:noreply, assign(socket, :questions, questions)}
   end
 
-  defp format_category(cat) do
-    cat |> to_string() |> String.replace("_", " ") |> String.split(" ") |> Enum.map(&String.capitalize/1) |> Enum.join(" ")
-  end
+  defp format_category(cat), do: WorthAsking.Categories.label(cat)
 
   defp status_class(:pending), do: "bg-yellow-50 text-yellow-700"
   defp status_class(:answered), do: "bg-blue-50 text-blue-700"

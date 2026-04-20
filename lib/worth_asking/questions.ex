@@ -5,8 +5,10 @@ defmodule WorthAsking.Questions do
 
   import Ecto.Query
   alias WorthAsking.Repo
-  alias WorthAsking.Questions.{Question, Response, Payment, Rating}
+  alias WorthAsking.Questions.{Question, Response, Payment, Rating, ResponseInteraction}
   alias WorthAsking.Moderation.Block
+
+  @max_responses_per_question 3
 
   # Questions
 
@@ -19,7 +21,7 @@ defmodule WorthAsking.Questions do
 
   def list_pending_questions_by_category(category) do
     Question
-    |> where(category: ^category, status: :pending)
+    |> where([q], q.category == ^category and q.status in [:pending, :paid])
     |> order_by(asc: :inserted_at)
     |> Repo.all()
   end
@@ -68,25 +70,45 @@ defmodule WorthAsking.Questions do
   # Responses
 
   def create_response(question, contributor, attrs) do
-    result =
-      %Response{}
-      |> Response.changeset(attrs)
-      |> Ecto.Changeset.put_assoc(:question, question)
-      |> Ecto.Changeset.put_assoc(:contributor, contributor)
-      |> Repo.insert()
+    # Enforce max 3 responses per question
+    current_count = count_responses(question.id)
 
-    case result do
-      {:ok, response} ->
-        Phoenix.PubSub.broadcast(
-          WorthAsking.PubSub,
-          "question:#{question.id}",
-          {:new_response, response}
-        )
+    if current_count >= @max_responses_per_question do
+      {:error, :question_full}
+    else
+      result =
+        %Response{}
+        |> Response.changeset(attrs)
+        |> Ecto.Changeset.put_assoc(:question, question)
+        |> Ecto.Changeset.put_assoc(:contributor, contributor)
+        |> Repo.insert()
 
-        {:ok, response}
+      case result do
+        {:ok, response} ->
+          # Auto-close question when it reaches max responses
+          new_count = current_count + 1
 
-      error ->
-        error
+          if new_count >= @max_responses_per_question do
+            update_question_status(question, :answered)
+          end
+
+          Phoenix.PubSub.broadcast(
+            WorthAsking.PubSub,
+            "question:#{question.id}",
+            {:new_response, response}
+          )
+
+          Phoenix.PubSub.broadcast(
+            WorthAsking.PubSub,
+            "user:#{question.user_id}",
+            {:response_ready, question}
+          )
+
+          {:ok, response}
+
+        error ->
+          error
+      end
     end
   end
 
@@ -98,7 +120,7 @@ defmodule WorthAsking.Questions do
 
   def list_available_questions_for_contributor(profile) do
     contributor_user_id = profile.user_id
-    categories = profile.categories |> Enum.map(&to_string/1)
+    contributor_categories = profile.categories
 
     blocked_user_ids =
       Block
@@ -115,7 +137,7 @@ defmodule WorthAsking.Questions do
       |> Enum.uniq()
 
     Question
-    |> where([q], q.status == :pending and q.category in ^categories)
+    |> where([q], q.status in [:pending, :paid])
     |> then(fn query ->
       if blocked_user_ids == [] do
         query
@@ -125,6 +147,9 @@ defmodule WorthAsking.Questions do
     end)
     |> order_by(asc: :inserted_at)
     |> Repo.all()
+    |> Enum.filter(fn q ->
+      WorthAsking.Categories.matches?(contributor_categories, q.category)
+    end)
   end
 
   def list_responses_by_contributor(user_id) do
@@ -162,5 +187,46 @@ defmodule WorthAsking.Questions do
       on_conflict: {:replace, [:score, :updated_at]},
       conflict_target: [:response_id, :user_id]
     )
+  end
+
+  # Response interactions (like/save)
+
+  def toggle_interaction(response_id, user_id, type) when type in ["like", "save"] do
+    case Repo.get_by(ResponseInteraction, response_id: response_id, user_id: user_id, type: type) do
+      nil ->
+        %ResponseInteraction{}
+        |> ResponseInteraction.changeset(%{type: type})
+        |> Ecto.Changeset.put_change(:response_id, response_id)
+        |> Ecto.Changeset.put_change(:user_id, user_id)
+        |> Repo.insert()
+
+      existing ->
+        Repo.delete(existing)
+        {:ok, :removed}
+    end
+  end
+
+  def list_interactions_for_user(user_id, response_ids) when is_list(response_ids) do
+    ResponseInteraction
+    |> where([i], i.user_id == ^user_id and i.response_id in ^response_ids)
+    |> Repo.all()
+    |> Enum.group_by(& &1.response_id)
+  end
+
+  def question_full?(question_id) do
+    count_responses(question_id) >= @max_responses_per_question
+  end
+
+  def has_active_question?(user_id) do
+    Question
+    |> where([q], q.user_id == ^user_id and q.status in [:pending, :paid])
+    |> Repo.exists?()
+  end
+
+  def get_question_with_responses_and_interactions!(id, user_id) do
+    question = get_question_with_responses!(id)
+    response_ids = Enum.map(question.responses, & &1.id)
+    interactions = list_interactions_for_user(user_id, response_ids)
+    {question, interactions}
   end
 end

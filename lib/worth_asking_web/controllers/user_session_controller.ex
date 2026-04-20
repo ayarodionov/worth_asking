@@ -67,16 +67,58 @@ defmodule WorthAskingWeb.UserSessionController do
 
   def confirm(conn, %{"token" => token}) do
     if user = Accounts.get_user_by_magic_link_token(token) do
-      form = Phoenix.Component.to_form(%{"token" => token}, as: "user")
+      # Auto-login contributors who haven't completed onboarding
+      if user.role == :contributor && !contributor_onboarded?(user) do
+        case Accounts.login_user_by_magic_link(token) do
+          {:ok, {user, _}} ->
+            conn
+            |> put_flash(:info, "Welcome to Worth Asking!")
+            |> UserAuth.log_in_user(user, %{"remember_me" => "true"})
 
-      conn
-      |> assign(:user, user)
-      |> assign(:form, form)
-      |> render(:confirm)
+          {:error, :not_found} ->
+            conn
+            |> put_flash(:error, "The link is invalid or it has expired.")
+            |> redirect(to: ~p"/users/log-in")
+        end
+      else
+        form = Phoenix.Component.to_form(%{"token" => token}, as: "user")
+
+        conn
+        |> assign(:user, user)
+        |> assign(:form, form)
+        |> render(:confirm)
+      end
     else
       conn
       |> put_flash(:error, "Magic link is invalid or it has expired.")
       |> redirect(to: ~p"/users/log-in")
+    end
+  end
+
+  defp contributor_onboarded?(user) do
+    case WorthAsking.Contributors.get_profile_by_user(user.id) do
+      %{onboarding_completed: true} -> true
+      _ -> false
+    end
+  end
+
+  def setup_onboarding(conn, %{"token" => token}) do
+    case Accounts.verify_onboarding_token(token) do
+      {:ok, user} ->
+        if user.role == :contributor do
+          conn
+          |> put_flash(:info, "Welcome to Worth Asking!")
+          |> UserAuth.log_in_user(user, %{"remember_me" => "true"})
+        else
+          conn
+          |> put_flash(:error, "Invalid onboarding link.")
+          |> redirect(to: ~p"/")
+        end
+
+      {:error, _} ->
+        conn
+        |> put_flash(:error, "This onboarding link is invalid or has expired. Please contact support.")
+        |> redirect(to: ~p"/users/log-in")
     end
   end
 

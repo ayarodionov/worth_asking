@@ -104,6 +104,36 @@ defmodule WorthAsking.Contributors do
     |> Enum.sort_by(& &1.response_count)
   end
 
+  def list_approved_contributors do
+    Profile
+    |> where([p], p.application_status == :approved)
+    |> preload(:user)
+    |> order_by(asc: :display_name)
+    |> Repo.all()
+  end
+
+  def pause_contributor(%Profile{} = profile, reason \\ nil) do
+    profile
+    |> Ecto.Changeset.change(
+      paused: true,
+      paused_reason: reason,
+      paused_at: DateTime.utc_now(:second),
+      available_now: false,
+      available_until: nil
+    )
+    |> Repo.update()
+  end
+
+  def unpause_contributor(%Profile{} = profile) do
+    profile
+    |> Ecto.Changeset.change(
+      paused: false,
+      paused_reason: nil,
+      paused_at: nil
+    )
+    |> Repo.update()
+  end
+
   def update_profile_stats(user_id) do
     profile = Repo.get_by!(Profile, user_id: user_id)
 

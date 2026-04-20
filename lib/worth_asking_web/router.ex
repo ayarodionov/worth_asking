@@ -1,7 +1,8 @@
 defmodule WorthAskingWeb.Router do
   use WorthAskingWeb, :router
 
-  import WorthAskingWeb.UserAuth
+  import WorthAskingWeb.UserAuth, except: [require_admin: 2]
+  import WorthAskingWeb.AdminAuth, only: [fetch_current_admin: 2, require_admin: 2, redirect_if_admin_authenticated: 2]
 
   pipeline :browser do
     plug :accepts, ["html"]
@@ -17,6 +18,16 @@ defmodule WorthAskingWeb.Router do
     plug :accepts, ["json"]
   end
 
+  pipeline :admin_browser do
+    plug :accepts, ["html"]
+    plug :fetch_session
+    plug :fetch_live_flash
+    plug :put_root_layout, html: {WorthAskingWeb.Layouts, :root}
+    plug :protect_from_forgery
+    plug :put_secure_browser_headers
+    plug :fetch_current_admin
+  end
+
   # Public routes (non-LiveView)
   scope "/", WorthAskingWeb do
     pipe_through :browser
@@ -24,6 +35,20 @@ defmodule WorthAskingWeb.Router do
     get "/", PageController, :home
     get "/contributors/join", AdvisorRegistrationController, :new
     post "/contributors/join", AdvisorRegistrationController, :create
+    get "/contributors/setup/:token", UserSessionController, :setup_onboarding
+  end
+
+  # Contributor-only routes (must be before public /contributors/:id catch-all)
+  scope "/", WorthAskingWeb do
+    pipe_through [:browser, :require_authenticated_user]
+
+    live_session :contributor,
+      on_mount: [{WorthAskingWeb.UserAuth, :require_contributor}] do
+      live "/contributors/onboarding", ContributorOnboardingLive
+      live "/contributors/guidelines", ContributorGuidelinesLive
+      live "/dashboard", ContributorDashboardLive
+      live "/dashboard/respond/:question_id", ContributorResponseLive
+    end
   end
 
   # Public LiveView routes
@@ -87,32 +112,37 @@ defmodule WorthAskingWeb.Router do
       on_mount: [{WorthAskingWeb.UserAuth, :require_authenticated_user}] do
       live "/questions/new", QuestionLive
       live "/questions/:id", QuestionShowLive
-      live "/my-questions", MyQuestionsLive
+      live "/my-questions", UserDashboardLive
     end
   end
 
-  # Contributor-only routes
-  scope "/", WorthAskingWeb do
-    pipe_through [:browser, :require_authenticated_user]
 
-    live_session :contributor,
-      on_mount: [{WorthAskingWeb.UserAuth, :require_contributor}] do
-      live "/contributors/onboarding", ContributorOnboardingLive
-      live "/contributors/guidelines", ContributorGuidelinesLive
-      live "/dashboard", ContributorDashboardLive
-      live "/dashboard/respond/:question_id", ContributorResponseLive
-    end
+  # Admin login (no auth required)
+  scope "/admin", WorthAskingWeb do
+    pipe_through [:admin_browser, :redirect_if_admin_authenticated]
+
+    get "/login", AdminSessionController, :new
+    post "/login", AdminSessionController, :create
   end
 
-  # Admin-only routes
+  # Admin logout
+  scope "/admin", WorthAskingWeb do
+    pipe_through [:admin_browser, :require_admin]
+
+    delete "/logout", AdminSessionController, :delete
+  end
+
+  # Admin-only routes (separate auth from users)
   scope "/admin", WorthAskingWeb.Admin do
-    pipe_through [:browser, :require_authenticated_user]
+    pipe_through [:admin_browser, :require_admin]
 
     live_session :admin,
-      on_mount: [{WorthAskingWeb.UserAuth, :require_admin}] do
+      on_mount: [{WorthAskingWeb.AdminAuth, :require_admin}],
+      session: {WorthAskingWeb.AdminAuth, :live_session_data, []} do
       live "/", AdminDashboardLive
       live "/reports", AdminReportsLive
       live "/applications", AdminApplicationsLive
+      live "/contributors", AdminContributorsLive
     end
   end
 

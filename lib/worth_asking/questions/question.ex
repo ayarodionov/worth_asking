@@ -7,7 +7,15 @@ defmodule WorthAsking.Questions.Question do
   schema "questions" do
     field :text, :string
     field :category, Ecto.Enum,
-      values: [:communication, :first_impressions, :style, :dating_dynamics]
+      values: [
+        # Current categories
+        :dating_attraction, :relationships, :marriage_long_term, :sex_intimacy,
+        :communication, :social_situational, :work_professional,
+        :appearance_lifestyle, :general,
+        # Legacy values (from previous schema versions)
+        :dating, :appearance, :work, :social_situations, :breakups,
+        :first_impressions, :style, :dating_dynamics
+      ]
     field :status, Ecto.Enum,
       values: [:pending, :answered, :paid],
       default: :pending
@@ -26,6 +34,6 @@ defmodule WorthAsking.Questions.Question do
     question
     |> cast(attrs, [:text, :category, :image_paths, :session_type])
     |> validate_required([:text, :category])
-    |> validate_length(:text, min: 10, max: 2000)
+    |> validate_length(:text, min: 20, max: 2000)
   end
 end

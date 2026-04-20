@@ -8,7 +8,15 @@ defmodule WorthAsking.Contributors.Profile do
     field :display_name, :string
     field :bio, :string
     field :categories, {:array, Ecto.Enum},
-      values: [:communication, :first_impressions, :style, :dating_dynamics]
+      values: [
+        # Current categories
+        :dating_attraction, :relationships, :marriage_long_term, :sex_intimacy,
+        :communication, :social_situational, :work_professional,
+        :appearance_lifestyle, :general,
+        # Legacy values
+        :dating, :appearance, :work, :social_situations, :breakups,
+        :first_impressions, :style, :dating_dynamics
+      ]
     field :specialties, {:array, :string}, default: []
     field :verified, :boolean, default: false
     field :stripe_connect_id, :string
@@ -35,6 +43,11 @@ defmodule WorthAsking.Contributors.Profile do
     field :accept_fast, :boolean, default: false
     field :active_session_count, :integer, default: 0
     field :max_active_sessions, :integer, default: 2
+
+    # Admin moderation
+    field :paused, :boolean, default: false
+    field :paused_reason, :string
+    field :paused_at, :utc_datetime
 
     belongs_to :user, WorthAsking.Accounts.User
 
@@ -98,6 +111,7 @@ defmodule WorthAsking.Contributors.Profile do
   def available?(%__MODULE__{} = profile) do
     profile.available_now &&
       profile.application_status == :approved &&
+      not profile.paused &&
       profile.active_session_count < profile.max_active_sessions &&
       (is_nil(profile.available_until) || DateTime.compare(profile.available_until, DateTime.utc_now()) == :gt)
   end

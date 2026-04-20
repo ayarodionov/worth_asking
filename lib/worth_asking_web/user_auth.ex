@@ -37,7 +37,7 @@ defmodule WorthAskingWeb.UserAuth do
 
     conn
     |> create_or_extend_session(user, params)
-    |> redirect(to: user_return_to || signed_in_path(conn))
+    |> redirect(to: user_return_to || signed_in_path_for(user))
   end
 
   @doc """
@@ -187,7 +187,7 @@ defmodule WorthAskingWeb.UserAuth do
   def redirect_if_user_is_authenticated(conn, _opts) do
     if conn.assigns.current_scope do
       conn
-      |> redirect(to: signed_in_path(conn))
+      |> redirect(to: signed_in_path_for(conn.assigns.current_scope.user))
       |> halt()
     else
       conn
@@ -204,7 +204,25 @@ defmodule WorthAskingWeb.UserAuth do
     }
   end
 
-  defp signed_in_path(_conn), do: ~p"/"
+  defp signed_in_path_for(user) do
+    cond do
+      user.role == :contributor && not contributor_onboarded?(user) ->
+        ~p"/contributors/onboarding"
+
+      user.role == :contributor ->
+        ~p"/dashboard"
+
+      true ->
+        ~p"/"
+    end
+  end
+
+  defp contributor_onboarded?(user) do
+    case WorthAsking.Contributors.get_profile_by_user(user.id) do
+      %{onboarding_completed: true} -> true
+      _ -> false
+    end
+  end
 
   @doc """
   Plug for routes that require the user to be authenticated.

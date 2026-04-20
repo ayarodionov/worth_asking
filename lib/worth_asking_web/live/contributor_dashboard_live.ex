@@ -151,7 +151,7 @@ defmodule WorthAskingWeb.ContributorDashboardLive do
                 <div class="flex-1 min-w-0">
                   <div class="flex items-center gap-2 mb-2">
                     <span class="text-xs font-medium px-2 py-1 rounded-full bg-[#A8BDA4]/20 text-[#6F8F6B] shrink-0">
-                      {question.category |> to_string() |> String.replace("_", " ") |> String.split(" ") |> Enum.map(&String.capitalize/1) |> Enum.join(" ")}
+                      {WorthAsking.Categories.label(question.category)}
                     </span>
                     <span class="text-xs text-[#2F2F2F]/40">
                       {time_ago(question.inserted_at)}

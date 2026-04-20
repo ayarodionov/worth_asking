@@ -10,6 +10,7 @@ defmodule WorthAsking.Notifications do
   import Ecto.Query
   alias WorthAsking.Repo
   alias WorthAsking.Contributors.Profile
+  alias WorthAsking.Moderation.Block
   alias WorthAsking.Notifications.NotificationWave
   alias WorthAsking.Accounts.UserNotifier
 
@@ -37,7 +38,7 @@ defmodule WorthAsking.Notifications do
     session_type = question.session_type || "basic"
     category = question.category
 
-    eligible = list_eligible_contributors(category, session_type, [])
+    eligible = list_eligible_contributors(category, session_type, [], question.user_id)
     sizes = Map.get(@wave_sizes, session_type, [5, 3, 3])
     delays = Map.get(@wave_delays_ms, session_type, [0, 10 * 60_000, 30 * 60_000])
 
@@ -187,16 +188,36 @@ defmodule WorthAsking.Notifications do
 
   @doc """
   List eligible contributors for a category and session type.
-  Excludes already-notified contributor IDs.
+  Excludes already-notified contributor IDs and contributors blocked by/blocking the asker.
   Returns profiles ordered by fewest responses (fair distribution).
   """
-  def list_eligible_contributors(category, session_type, exclude_ids) do
+  def list_eligible_contributors(category, session_type, exclude_ids, asker_user_id \\ nil) do
     category_str = to_string(category)
+
+    blocked_user_ids =
+      if asker_user_id do
+        Block
+        |> where([b], b.blocker_id == ^asker_user_id or b.blocked_id == ^asker_user_id)
+        |> select([b], %{blocker_id: b.blocker_id, blocked_id: b.blocked_id})
+        |> Repo.all()
+        |> Enum.flat_map(fn block -> [block.blocker_id, block.blocked_id] end)
+        |> Enum.reject(&(&1 == asker_user_id))
+        |> Enum.uniq()
+      else
+        []
+      end
 
     Profile
     |> where([p], p.application_status == :approved)
     |> where([p], p.available_now == true)
     |> where([p], p.id not in ^exclude_ids)
+    |> then(fn query ->
+      if blocked_user_ids == [] do
+        query
+      else
+        where(query, [p], p.user_id not in ^blocked_user_ids)
+      end
+    end)
     |> Repo.all()
     |> Enum.filter(fn p ->
       category_str in Enum.map(p.categories, &to_string/1) &&

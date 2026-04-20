@@ -280,13 +280,32 @@ defmodule WorthAsking.Accounts do
   end
 
   @doc """
-  Delivers the approval notification with an onboarding magic link.
+  Generates a signed onboarding token for a user. Valid for 7 days.
   """
-  def deliver_approval_notification(%User{} = user, onboarding_url_fun)
-      when is_function(onboarding_url_fun, 1) do
-    {encoded_token, user_token} = UserToken.build_email_token(user, "login")
-    Repo.insert!(user_token)
-    UserNotifier.deliver_approval_notification(user, onboarding_url_fun.(encoded_token))
+  def generate_onboarding_token(%User{} = user) do
+    Phoenix.Token.sign(WorthAskingWeb.Endpoint, "onboarding", user.id)
+  end
+
+  @doc """
+  Verifies an onboarding token. Returns the user if valid.
+  """
+  def verify_onboarding_token(token) do
+    # 7 days in seconds
+    max_age = 7 * 24 * 60 * 60
+
+    with {:ok, user_id} <- Phoenix.Token.verify(WorthAskingWeb.Endpoint, "onboarding", token, max_age: max_age),
+         %User{} = user <- Repo.get(User, user_id) do
+      {:ok, user}
+    else
+      _ -> {:error, :invalid}
+    end
+  end
+
+  @doc """
+  Delivers the approval notification with a direct onboarding link.
+  """
+  def deliver_approval_notification(%User{} = user, onboarding_url) do
+    UserNotifier.deliver_approval_notification(user, onboarding_url)
   end
 
   @doc """

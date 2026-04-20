@@ -123,6 +123,34 @@ defmodule WorthAskingWeb.ContributorOnboardingLive do
               class="w-full px-3 py-2 border border-[#E4E6E3] rounded-md text-sm bg-[#F7F7F5] text-[#2F2F2F]/50"
             />
           </div>
+
+          <%= if !@user.hashed_password do %>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
+              <div>
+                <label class="block text-sm font-medium text-[#2F2F2F] mb-1">Create Password</label>
+                <input
+                  type="password"
+                  name="onboarding[password]"
+                  autocomplete="new-password"
+                  required
+                  minlength="12"
+                  class="w-full px-3 py-2 border border-[#E4E6E3] rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-[#6F8F9D] focus:border-[#6F8F9D]"
+                />
+                <p class="text-xs text-[#2F2F2F]/40 mt-1">Minimum 12 characters</p>
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-[#2F2F2F] mb-1">Confirm Password</label>
+                <input
+                  type="password"
+                  name="onboarding[password_confirmation]"
+                  autocomplete="new-password"
+                  required
+                  minlength="12"
+                  class="w-full px-3 py-2 border border-[#E4E6E3] rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-[#6F8F9D] focus:border-[#6F8F9D]"
+                />
+              </div>
+            </div>
+          <% end %>
         </section>
 
         <%!-- Section 2: Public Profile --%>
@@ -346,6 +374,27 @@ defmodule WorthAskingWeb.ContributorOnboardingLive do
     profile = socket.assigns.profile
     user = socket.assigns.user
 
+    # Validate password if user doesn't have one yet
+    password = params["password"]
+    password_confirmation = params["password_confirmation"]
+
+    if is_nil(user.hashed_password) do
+      cond do
+        is_nil(password) || String.length(password) < 12 ->
+          {:noreply, put_flash(socket, :error, "Password must be at least 12 characters.")}
+
+        password != password_confirmation ->
+          {:noreply, put_flash(socket, :error, "Passwords do not match.")}
+
+        true ->
+          save_onboarding(socket, profile, user, params, password)
+      end
+    else
+      save_onboarding(socket, profile, user, params, nil)
+    end
+  end
+
+  defp save_onboarding(socket, profile, user, params, password) do
     user_attrs = %{
       first_name: params["first_name"],
       last_name: params["last_name"],
@@ -362,17 +411,33 @@ defmodule WorthAskingWeb.ContributorOnboardingLive do
       "agreed_to_terms" => params["agreed_to_terms"] == "true"
     }
 
-    case Contributors.complete_onboarding(profile, profile_attrs, user, user_attrs) do
-      {:ok, _profile} ->
-        {:noreply,
-         socket
-         |> put_flash(:info, "Profile setup complete.")
-         |> push_navigate(to: ~p"/contributors/guidelines")}
+    # Set password first if needed (without deleting session tokens)
+    password_result =
+      if password do
+        user
+        |> WorthAsking.Accounts.User.password_changeset(%{password: password})
+        |> WorthAsking.Repo.update()
+      else
+        {:ok, user}
+      end
+
+    case password_result do
+      {:ok, _updated_user} ->
+        case Contributors.complete_onboarding(profile, profile_attrs, user, user_attrs) do
+          {:ok, _profile} ->
+            {:noreply,
+             socket
+             |> put_flash(:info, "Profile setup complete.")
+             |> push_navigate(to: ~p"/contributors/guidelines")}
+
+          {:error, changeset} ->
+            {:noreply,
+             socket
+             |> put_flash(:error, "Please check the form and try again. #{inspect(changeset.errors)}")}
+        end
 
       {:error, changeset} ->
-        {:noreply,
-         socket
-         |> put_flash(:error, "Please check the form and try again. #{inspect(changeset.errors)}")}
+        {:noreply, put_flash(socket, :error, "Password error: #{inspect(changeset.errors)}")}
     end
   end
 end

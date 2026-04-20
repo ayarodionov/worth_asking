@@ -2,9 +2,8 @@ defmodule WorthAskingWeb.ContributorApplyLive do
   use WorthAskingWeb, :live_view
 
   alias WorthAsking.Contributors
+  alias WorthAsking.Categories
   alias WorthAsking.Accounts.UserNotifier
-
-  @categories [:communication, :first_impressions, :style, :dating_dynamics]
 
   # Scenario-based vetting questions — tests empathy, nuance, and communication quality
   @scenario_questions [
@@ -229,15 +228,16 @@ defmodule WorthAskingWeb.ContributorApplyLive do
           </div>
 
           <div>
-            <label class="block text-sm font-medium text-[#2F2F2F] mb-3">
-              Which topics do you feel confident advising on?
+            <label class="block text-sm font-medium text-[#2F2F2F] mb-2">
+              Select the topics you feel comfortable giving honest advice on
             </label>
-            <div class="grid grid-cols-2 gap-3">
+            <p class="text-xs text-[#2F2F2F]/40 mb-3">You can choose multiple</p>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <label
-                :for={cat <- all_categories()}
+                :for={cat <- Categories.all()}
                 class={[
                   "flex items-center gap-3 border rounded-lg p-4 cursor-pointer transition-colors bg-white",
-                  if(cat in @categories,
+                  if(cat.id in @categories,
                     do: "border-[#6F8F6B] bg-[#A8BDA4]/5",
                     else: "border-[#E4E6E3] hover:border-[#A8BDA4]"
                   )
@@ -246,15 +246,15 @@ defmodule WorthAskingWeb.ContributorApplyLive do
                 <input
                   type="checkbox"
                   name="categories[]"
-                  value={cat}
-                  checked={cat in @categories}
+                  value={cat.id}
+                  checked={cat.id in @categories}
                   class="rounded border-[#E4E6E3] text-[#6F8F6B] focus:ring-[#6F8F6B]"
                 />
                 <div>
                   <span class="text-sm font-medium text-[#2F2F2F]">
-                    {format_category(cat)}
+                    {cat.label}
                   </span>
-                  <p class="text-xs text-[#2F2F2F]/40">{category_description(cat)}</p>
+                  <p class="text-xs text-[#2F2F2F]/40">{cat.description}</p>
                 </div>
               </label>
             </div>
@@ -292,7 +292,7 @@ defmodule WorthAskingWeb.ContributorApplyLive do
                   Scenario {idx + 1}
                 </span>
                 <span class="text-xs text-[#2F2F2F]/30">
-                  {format_category(scenario.category)}
+                  {Categories.label(scenario.category)}
                 </span>
               </div>
               <p class="text-sm text-[#2F2F2F] leading-relaxed italic mb-3">{scenario.scenario}</p>
@@ -417,12 +417,12 @@ defmodule WorthAskingWeb.ContributorApplyLive do
               </div>
               <div>
                 <p class="text-xs text-[#2F2F2F]/40">Categories</p>
-                <div class="flex gap-2 mt-1">
+                <div class="flex flex-wrap gap-2 mt-1">
                   <span
                     :for={cat <- @categories}
                     class="text-xs font-medium px-2 py-1 rounded-full bg-[#A8BDA4]/20 text-[#6F8F6B]"
                   >
-                    {format_category(cat)}
+                    {Categories.label(cat)}
                   </span>
                 </div>
               </div>
@@ -723,7 +723,6 @@ defmodule WorthAskingWeb.ContributorApplyLive do
 
   # --- Helpers ---
 
-  defp all_categories, do: @categories
   defp judgment_questions, do: @judgment_questions
 
   defp calculate_judgment_score(answers) do
@@ -739,15 +738,6 @@ defmodule WorthAskingWeb.ContributorApplyLive do
       total + score
     end)
   end
-
-  defp format_category(cat) do
-    cat |> to_string() |> String.replace("_", " ") |> String.split(" ") |> Enum.map(&String.capitalize/1) |> Enum.join(" ")
-  end
-
-  defp category_description(:communication), do: "Texting, hard conversations, saying what you mean"
-  defp category_description(:first_impressions), do: "Body language, approachability, social reads"
-  defp category_description(:style), do: "Grooming, fashion, personal presentation"
-  defp category_description(:dating_dynamics), do: "Signals, timing, relationship navigation"
 
   defp step_label(1), do: "About you"
   defp step_label(2), do: "Scenario responses"

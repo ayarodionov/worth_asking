@@ -1,6 +1,8 @@
 defmodule WorthAskingWeb.QuestionShowLive do
   use WorthAskingWeb, :live_view
 
+  import WorthAskingWeb.Components.ResponseCard
+
   alias WorthAsking.Questions
 
   @max_perspectives 3
@@ -8,8 +10,8 @@ defmodule WorthAskingWeb.QuestionShowLive do
 
   @impl true
   def mount(%{"id" => id}, _session, socket) do
-    question = Questions.get_question_with_responses!(id)
     user = socket.assigns.current_scope.user
+    question = Questions.get_question_with_responses!(id)
 
     if question.user_id != user.id do
       {:ok,
@@ -23,31 +25,29 @@ defmodule WorthAskingWeb.QuestionShowLive do
 
       responses = Enum.take(question.responses, @max_perspectives)
       followup_count = count_followups(question)
+      interactions = load_interactions(user.id, responses)
 
       {:ok,
        socket
        |> assign(:page_title, "Your Perspectives")
        |> assign(:question, question)
        |> assign(:responses, responses)
+       |> assign(:interactions, interactions)
        |> assign(:total_expected, @max_perspectives)
        |> assign(:followup_text, "")
        |> assign(:followup_count, followup_count)
-       |> assign(:max_followups, @max_followups)
-       |> assign(:marked_helpful, false)
-       |> assign(:saved, false)}
+       |> assign(:max_followups, @max_followups)}
     end
   end
 
   @impl true
   def render(assigns) do
     ~H"""
-    <div class="max-w-2xl mx-auto px-6 py-12">
-      <%!-- Back link --%>
+    <div class="max-w-2xl mx-auto px-4 sm:px-6 py-8 sm:py-12">
       <a href={~p"/my-questions"} class="text-sm text-[#6F8F9D] hover:underline mb-8 inline-block">
-        &larr; My questions
+        &larr; Dashboard
       </a>
 
-      <%!-- Header --%>
       <div class="mb-8">
         <h1 class="text-2xl font-semibold text-[#2F2F2F] mb-1" style="font-family: Georgia, serif;">
           Your perspectives
@@ -83,36 +83,24 @@ defmodule WorthAskingWeb.QuestionShowLive do
       <% end %>
 
       <%!-- Response cards --%>
-      <div class="space-y-6 mb-12">
-        <div
+      <div class="space-y-4 mb-12">
+        <.response_card
           :for={{response, idx} <- Enum.with_index(@responses, 1)}
-          class="bg-white border border-[#E4E6E3] rounded-lg p-6"
-        >
-          <p class="text-xs font-medium text-[#2F2F2F]/40 uppercase tracking-wider mb-4">
-            Perspective {idx}
-          </p>
-          <p class="text-sm text-[#2F2F2F]/80 leading-relaxed whitespace-pre-line">
-            {response.text}
-          </p>
-        </div>
+          response={response}
+          index={idx}
+          liked={interaction?(@interactions, response.id, "like")}
+          saved={interaction?(@interactions, response.id, "save")}
+        />
 
-        <%!-- Placeholder cards for missing perspectives --%>
-        <div
+        <%!-- Placeholder cards --%>
+        <.response_card_placeholder
           :for={idx <- (length(@responses) + 1)..@total_expected//1}
           :if={length(@responses) < @total_expected}
-          class="border border-dashed border-[#E4E6E3] rounded-lg p-6"
-        >
-          <p class="text-xs font-medium text-[#2F2F2F]/20 uppercase tracking-wider mb-4">
-            Perspective {idx}
-          </p>
-          <div class="flex items-center gap-2 text-sm text-[#2F2F2F]/30">
-            <div class="w-3 h-3 border-2 border-[#E4E6E3] border-t-transparent rounded-full animate-spin"></div>
-            <span>Waiting for response...</span>
-          </div>
-        </div>
+          index={idx}
+        />
       </div>
 
-      <%!-- Empty state (no responses at all) --%>
+      <%!-- Empty state --%>
       <%= if @responses == [] and length(@question.responses) == 0 do %>
         <div class="text-center py-12 bg-white border border-[#E4E6E3] rounded-lg mb-12">
           <p class="text-[#2F2F2F]/50 mb-1">Your question is out there.</p>
@@ -153,32 +141,10 @@ defmodule WorthAskingWeb.QuestionShowLive do
         >
           Ask another question
         </a>
-        <button
-          :if={not @saved}
-          phx-click="save"
-          class="border border-[#E4E6E3] text-[#2F2F2F]/70 px-5 py-2.5 rounded-lg text-sm font-medium hover:border-[#6F8F9D] transition-colors"
-        >
-          Save this
-        </button>
-        <span :if={@saved} class="text-sm text-[#A8BDA4]">
-          Saved
-        </span>
-        <button
-          :if={not @marked_helpful}
-          phx-click="mark_helpful"
-          class="border border-[#E4E6E3] text-[#2F2F2F]/70 px-5 py-2.5 rounded-lg text-sm font-medium hover:border-[#A8BDA4] transition-colors"
-        >
-          Mark helpful
-        </button>
-        <span :if={@marked_helpful} class="text-sm text-[#A8BDA4]">
-          Marked as helpful
-        </span>
       </div>
     </div>
     """
   end
-
-  # --- Events ---
 
   @impl true
   def handle_event("send_followup", %{"text" => text}, socket) do
@@ -187,7 +153,6 @@ defmodule WorthAskingWeb.QuestionShowLive do
     if text == "" do
       {:noreply, socket}
     else
-      # For MVP, follow-ups create a new question linked to the original
       user = socket.assigns.current_scope.user
       original = socket.assigns.question
 
@@ -212,34 +177,55 @@ defmodule WorthAskingWeb.QuestionShowLive do
   end
 
   @impl true
-  def handle_event("save", _params, socket) do
-    {:noreply, assign(socket, :saved, true)}
+  def handle_event("toggle_like", %{"response-id" => response_id}, socket) do
+    user = socket.assigns.current_scope.user
+    Questions.toggle_interaction(response_id, user.id, "like")
+    {:noreply, refresh_interactions(socket)}
   end
 
   @impl true
-  def handle_event("mark_helpful", _params, socket) do
-    {:noreply, assign(socket, :marked_helpful, true)}
+  def handle_event("toggle_save", %{"response-id" => response_id}, socket) do
+    user = socket.assigns.current_scope.user
+    Questions.toggle_interaction(response_id, user.id, "save")
+    {:noreply, refresh_interactions(socket)}
   end
-
-  # --- PubSub ---
 
   @impl true
   def handle_info({:new_response, _response}, socket) do
+    user = socket.assigns.current_scope.user
     question = Questions.get_question_with_responses!(socket.assigns.question.id)
     responses = Enum.take(question.responses, @max_perspectives)
+    interactions = load_interactions(user.id, responses)
 
     {:noreply,
      socket
      |> assign(:question, question)
-     |> assign(:responses, responses)}
+     |> assign(:responses, responses)
+     |> assign(:interactions, interactions)}
   end
-
-  # --- Helpers ---
 
   defp count_followups(_question), do: 0
 
   defp remaining_followups(count, max) do
     remaining = max - count
     if remaining == 1, do: "#{remaining} follow-up", else: "#{remaining} follow-ups"
+  end
+
+  defp load_interactions(_user_id, []), do: %{}
+  defp load_interactions(user_id, responses) do
+    response_ids = Enum.map(responses, & &1.id)
+    Questions.list_interactions_for_user(user_id, response_ids)
+  end
+
+  defp interaction?(interactions, response_id, type) do
+    interactions
+    |> Map.get(response_id, [])
+    |> Enum.any?(&(&1.type == type))
+  end
+
+  defp refresh_interactions(socket) do
+    user = socket.assigns.current_scope.user
+    interactions = load_interactions(user.id, socket.assigns.responses)
+    assign(socket, :interactions, interactions)
   end
 end

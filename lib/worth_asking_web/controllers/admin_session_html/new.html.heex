@@ -1,0 +1,56 @@
+<div style="min-height: 100vh; display: flex; align-items: center; justify-content: center; background-color: #F7F7F5;">
+  <div style="width: 100%; max-width: 380px; padding: 0 24px;">
+    <div style="text-align: center; margin-bottom: 32px;">
+      <h1 style="font-family: Georgia, serif; font-size: 24px; font-weight: 600; color: #2F2F2F; margin-bottom: 4px;">
+        Worth Asking
+      </h1>
+      <p style="font-size: 13px; color: #2F2F2F; opacity: 0.4;">Admin</p>
+    </div>
+
+    <div style="background: white; border: 1px solid #E4E6E3; border-radius: 12px; padding: 32px;">
+      <%= if @error do %>
+        <div style="background: #FEF2F2; border: 1px solid #FECACA; color: #B91C1C; font-size: 13px; border-radius: 8px; padding: 12px; margin-bottom: 20px;">
+          {@error}
+        </div>
+      <% end %>
+
+      <.form for={%{}} as={:admin} action={~p"/admin/login"}>
+        <div style="margin-bottom: 16px;">
+          <label for="admin_email" style="display: block; font-size: 13px; font-weight: 500; color: #2F2F2F; margin-bottom: 6px;">
+            Email
+          </label>
+          <input
+            type="email"
+            id="admin_email"
+            name="admin[email]"
+            autocomplete="email"
+            required
+            autofocus
+            style="width: 100%; border: 1px solid #E4E6E3; border-radius: 8px; padding: 10px 12px; font-size: 14px; outline: none; box-sizing: border-box;"
+          />
+        </div>
+
+        <div style="margin-bottom: 24px;">
+          <label for="admin_password" style="display: block; font-size: 13px; font-weight: 500; color: #2F2F2F; margin-bottom: 6px;">
+            Password
+          </label>
+          <input
+            type="password"
+            id="admin_password"
+            name="admin[password]"
+            autocomplete="current-password"
+            required
+            style="width: 100%; border: 1px solid #E4E6E3; border-radius: 8px; padding: 10px 12px; font-size: 14px; outline: none; box-sizing: border-box;"
+          />
+        </div>
+
+        <button
+          type="submit"
+          style="width: 100%; background: #2F2F2F; color: white; border: none; border-radius: 8px; padding: 12px; font-size: 14px; font-weight: 500; cursor: pointer;"
+        >
+          Sign in
+        </button>
+      </.form>
+    </div>
+  </div>
+</div>

@@ -84,7 +84,7 @@ defmodule WorthAskingWeb.Admin.AdminApplicationsLive do
                     :for={cat <- profile.categories}
                     class="text-xs border border-[#E4E6E3] text-[#2F2F2F]/70 px-2 py-1 rounded-full"
                   >
-                    {cat |> to_string() |> String.replace("_", " ") |> String.capitalize()}
+                    {WorthAsking.Categories.label(cat)}
                   </span>
                 </div>
               </div>
@@ -187,12 +187,11 @@ defmodule WorthAskingWeb.Admin.AdminApplicationsLive do
 
     case Contributors.approve_contributor(profile) do
       {:ok, approved_profile} ->
-        # Send approval email with onboarding magic link
+        # Send approval email with direct onboarding link
         user = approved_profile.user
-        Accounts.deliver_approval_notification(
-          user,
-          &(WorthAskingWeb.Endpoint.url() <> "/users/log-in/#{&1}")
-        )
+        token = Accounts.generate_onboarding_token(user)
+        onboarding_url = WorthAskingWeb.Endpoint.url() <> "/contributors/setup/" <> token
+        Accounts.deliver_approval_notification(user, onboarding_url)
 
         applications = Contributors.list_pending_applications()
 

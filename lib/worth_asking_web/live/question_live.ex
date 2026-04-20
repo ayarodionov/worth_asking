@@ -2,145 +2,254 @@ defmodule WorthAskingWeb.QuestionLive do
   use WorthAskingWeb, :live_view
 
   alias WorthAsking.Questions
-  alias WorthAsking.Questions.Question
+  alias WorthAsking.Categories
+
+  @price_cents 499
 
   @impl true
-  def mount(params, _session, socket) do
-    initial_text = params["q"] || ""
+  def mount(_params, _session, socket) do
+    user = socket.assigns.current_scope.user
 
-    socket =
-      socket
-      |> assign(:page_title, "Ask a Question")
-      |> assign(:step, :compose)
-      |> assign(:question_text, initial_text)
-      |> assign(:category, nil)
-      |> assign(:changeset, Question.changeset(%Question{}, %{}))
-      |> allow_upload(:images,
-        accept: ~w(.jpg .jpeg .png .gif .webp),
-        max_entries: 3,
-        max_file_size: 5_000_000
-      )
-
-    {:ok, socket}
+    if Questions.has_active_question?(user.id) do
+      {:ok,
+       socket
+       |> put_flash(:info, "You already have an active question. Wait for responses before asking another.")
+       |> redirect(to: ~p"/my-questions")}
+    else
+      {:ok,
+       socket
+       |> assign(:page_title, "Ask a Question")
+       |> assign(:step, :question)
+       |> assign(:question_text, "")
+       |> assign(:category, nil)
+       |> assign(:char_count, 0)
+       |> assign(:price_cents, @price_cents)
+       |> assign(:categories, Categories.all())
+       |> assign(:error, nil)}
+    end
   end
 
   @impl true
   def render(assigns) do
     ~H"""
-    <div class="max-w-xl mx-auto px-6 py-12">
-      <a href={~p"/"} class="text-sm text-[#6F8F9D] hover:underline mb-8 inline-block">
-        &larr; Back
-      </a>
+    <div class="max-w-xl mx-auto px-4 sm:px-6 py-8 sm:py-12">
+      <%!-- Progress indicator --%>
+      <div class="flex items-center justify-center gap-2 mb-8">
+        <div :for={s <- [:question, :category, :review, :confirmed]} class={[
+          "w-2 h-2 rounded-full transition-colors",
+          if(s == @step, do: "bg-[#2F2F2F]", else: step_complete?(s, @step) && "bg-[#A8BDA4]" || "bg-[#2F2F2F]/15")
+        ]} />
+      </div>
 
-      <%= if @step == :compose do %>
-        <h1 class="text-2xl font-semibold mb-6" style="font-family: Georgia, serif;">
-          What's on your mind?
-        </h1>
+      <%!-- STEP 1: Question Entry --%>
+      <%= if @step == :question do %>
+        <div class="mb-8">
+          <h1 class="text-2xl font-semibold mb-2" style="font-family: Georgia, serif;">
+            Ask Your Question
+          </h1>
+          <p class="text-sm text-[#2F2F2F]/50">
+            Ask honestly. Your question stays private.
+          </p>
+        </div>
 
-        <.form for={@changeset} phx-submit="submit_question" phx-change="validate" class="space-y-6">
+        <div class="space-y-4">
           <div>
             <textarea
-              name="question[text]"
-              rows="5"
-              placeholder="Type your question..."
-              class="w-full border border-[#E4E6E3] rounded-lg p-4 text-base resize-none focus:outline-none focus:border-[#6F8F9D] focus:ring-1 focus:ring-[#6F8F9D] bg-white"
+              name="text"
+              rows="6"
+              phx-keyup="update_text"
+              placeholder="What do women actually think when&#8230;&#10;Why did this interaction feel off&#8230;&#10;How would this come across to a woman&#8230;"
+              class="w-full border border-[#E4E6E3] rounded-lg p-4 text-base resize-none focus:outline-none focus:border-[#6F8F9D] focus:ring-1 focus:ring-[#6F8F9D] bg-white leading-relaxed"
             >{@question_text}</textarea>
-          </div>
-
-          <%!-- Photo upload --%>
-          <div>
-            <p class="text-sm font-medium text-[#2F2F2F]/70 mb-3">Attach images (optional, up to 3)</p>
-            <div class="border-2 border-dashed border-[#E4E6E3] rounded-lg p-6 text-center" phx-drop-target={@uploads.images.ref}>
-              <.live_file_input upload={@uploads.images} class="hidden" />
-              <label for={@uploads.images.ref} class="cursor-pointer text-sm text-[#6F8F9D] hover:underline">
-                Choose files or drag and drop
-              </label>
-            </div>
-
-            <%!-- Preview thumbnails --%>
-            <div :if={@uploads.images.entries != []} class="flex gap-3 mt-3">
-              <div :for={entry <- @uploads.images.entries} class="relative">
-                <.live_img_preview entry={entry} class="w-20 h-20 object-cover rounded-lg border border-[#E4E6E3]" />
-                <button
-                  type="button"
-                  phx-click="cancel_upload"
-                  phx-value-ref={entry.ref}
-                  class="absolute -top-2 -right-2 w-5 h-5 bg-red-500 text-white rounded-full text-xs flex items-center justify-center"
-                >
-                  &times;
-                </button>
-                <p :for={err <- upload_errors(@uploads.images, entry)} class="text-red-500 text-xs mt-1">
-                  {error_to_string(err)}
-                </p>
-              </div>
-            </div>
-          </div>
-
-          <div>
-            <p class="text-sm font-medium text-[#2F2F2F]/70 mb-3">Select a category</p>
-            <div class="grid grid-cols-2 gap-3">
-              <label
-                :for={cat <- [:communication, :first_impressions, :style, :dating_dynamics]}
-                class={[
-                  "border rounded-lg p-4 cursor-pointer transition-colors text-center",
-                  if(@category == cat,
-                    do: "border-[#6F8F9D] bg-[#6F8F9D]/5",
-                    else: "border-[#E4E6E3] hover:border-[#A8BDA4]"
-                  )
-                ]}
-              >
-                <input
-                  type="radio"
-                  name="question[category]"
-                  value={cat}
-                  checked={@category == cat}
-                  phx-click="select_category"
-                  phx-value-category={cat}
-                  class="sr-only"
-                />
-                <span class="text-sm font-medium">
-                  {format_category(cat)}
-                </span>
-              </label>
-            </div>
+            <p class={[
+              "text-xs mt-2",
+              if(@char_count < 20, do: "text-[#2F2F2F]/40", else: "text-[#6F8F6B]")
+            ]}>
+              {@char_count} characters
+              <%= if @char_count < 20 do %>
+                <span class="text-[#2F2F2F]/30">(minimum 20)</span>
+              <% end %>
+            </p>
           </div>
 
           <button
-            type="submit"
-            disabled={@category == nil}
+            phx-click="to_category"
+            disabled={@char_count < 20}
             class={[
               "w-full py-3 rounded-lg text-sm font-medium transition-colors",
+              if(@char_count >= 20,
+                do: "bg-[#6F8F9D] text-white hover:bg-[#5a7a87]",
+                else: "bg-[#E4E6E3] text-[#2F2F2F]/40 cursor-not-allowed"
+              )
+            ]}
+          >
+            Continue
+          </button>
+        </div>
+      <% end %>
+
+      <%!-- STEP 2: Category Selection --%>
+      <%= if @step == :category do %>
+        <div class="mb-8">
+          <h1 class="text-2xl font-semibold mb-2" style="font-family: Georgia, serif;">
+            Choose a Category
+          </h1>
+          <p class="text-sm text-[#2F2F2F]/50">
+            This helps us send your question to the right contributors.
+          </p>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-6">
+          <button
+            :for={cat <- @categories}
+            phx-click="select_category"
+            phx-value-category={cat.id}
+            class={[
+              "border rounded-lg p-4 text-left transition-colors",
+              if(@category == cat.id,
+                do: "border-[#6F8F9D] bg-[#6F8F9D]/5",
+                else: "border-[#E4E6E3] hover:border-[#A8BDA4] bg-white"
+              )
+            ]}
+          >
+            <span class="text-sm font-medium block">{cat.label}</span>
+            <span class="text-xs text-[#2F2F2F]/40 mt-0.5 block">{cat.description}</span>
+          </button>
+        </div>
+
+        <div class="flex gap-3">
+          <button
+            phx-click="back_to_question"
+            class="px-5 py-3 rounded-lg text-sm font-medium text-[#2F2F2F]/50 hover:text-[#2F2F2F]/70 transition-colors"
+          >
+            Back
+          </button>
+          <button
+            phx-click="to_review"
+            disabled={@category == nil}
+            class={[
+              "flex-1 py-3 rounded-lg text-sm font-medium transition-colors",
               if(@category,
                 do: "bg-[#6F8F9D] text-white hover:bg-[#5a7a87]",
                 else: "bg-[#E4E6E3] text-[#2F2F2F]/40 cursor-not-allowed"
               )
             ]}
           >
-            Get a second perspective
+            Continue
           </button>
-        </.form>
+        </div>
+      <% end %>
 
-      <% else %>
-        <div class="text-center py-12">
-          <div class="w-12 h-12 rounded-full bg-[#A8BDA4]/20 flex items-center justify-center mx-auto mb-4">
-            <span class="text-[#6F8F6B] text-xl">&#10003;</span>
-          </div>
+      <%!-- STEP 3: Review + Payment --%>
+      <%= if @step == :review do %>
+        <div class="mb-8">
           <h1 class="text-2xl font-semibold mb-2" style="font-family: Georgia, serif;">
-            Question submitted
+            Review Your Question
           </h1>
-          <p class="text-[#2F2F2F]/60 mb-8">
-            You'll receive 3-5 thoughtful responses. We'll notify you when they're ready.
+        </div>
+
+        <%!-- Question preview --%>
+        <div class="bg-white border border-[#E4E6E3] rounded-lg p-5 sm:p-6 mb-6">
+          <p class="text-xs text-[#2F2F2F]/40 uppercase tracking-wider mb-3">Your question</p>
+          <p class="text-base text-[#2F2F2F] leading-relaxed mb-4" style="font-family: Georgia, serif;">
+            "{@question_text}"
           </p>
+          <span class="text-xs font-medium px-2 py-1 rounded-full bg-[#A8BDA4]/20 text-[#6F8F6B]">
+            {Categories.label(@category)}
+          </span>
+        </div>
+
+        <%!-- What happens next --%>
+        <div class="bg-[#F7F7F5] border border-[#E4E6E3] rounded-lg p-5 mb-6">
+          <p class="text-xs text-[#2F2F2F]/40 uppercase tracking-wider mb-3">What happens next</p>
+          <ul class="space-y-2 text-sm text-[#2F2F2F]/60">
+            <li>Your question will be sent anonymously to contributors in this category.</li>
+            <li>You'll receive up to 3 thoughtful responses.</li>
+            <li>This is a one-time submission.</li>
+          </ul>
+        </div>
+
+        <%!-- Payment --%>
+        <div class="bg-white border border-[#E4E6E3] rounded-lg p-5 sm:p-6 mb-6">
+          <div class="flex items-center justify-between mb-4">
+            <p class="text-sm font-medium text-[#2F2F2F]">One question, 3 perspectives</p>
+            <p class="text-lg font-semibold text-[#2F2F2F]">{format_price(@price_cents)}</p>
+          </div>
+          <p class="text-xs text-[#2F2F2F]/40">
+            Secure payment. Your question is only sent after payment is complete.
+          </p>
+        </div>
+
+        <%= if @error do %>
+          <div class="bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg p-4 mb-4">
+            {@error}
+          </div>
+        <% end %>
+
+        <div class="flex gap-3">
+          <button
+            phx-click="back_to_category"
+            class="px-5 py-3 rounded-lg text-sm font-medium text-[#2F2F2F]/50 hover:text-[#2F2F2F]/70 transition-colors"
+          >
+            Back
+          </button>
+          <button
+            phx-click="pay_and_submit"
+            class="flex-1 py-3 rounded-lg text-sm font-medium bg-[#6F8F9D] text-white hover:bg-[#5a7a87] transition-colors"
+          >
+            Pay & Submit Question
+          </button>
+        </div>
+      <% end %>
+
+      <%!-- STEP 4: Confirmation --%>
+      <%= if @step == :confirmed do %>
+        <div class="text-center py-12">
+          <div class="w-14 h-14 rounded-full bg-[#A8BDA4]/20 flex items-center justify-center mx-auto mb-6">
+            <span class="text-[#6F8F6B] text-2xl">&#10003;</span>
+          </div>
+          <h1 class="text-2xl font-semibold mb-3" style="font-family: Georgia, serif;">
+            Your Question Has Been Sent
+          </h1>
+          <p class="text-sm text-[#2F2F2F]/50 max-w-sm mx-auto mb-3">
+            We've sent your question to contributors who are comfortable answering in this category.
+          </p>
+          <p class="text-sm text-[#2F2F2F]/50 max-w-sm mx-auto mb-3">
+            Responses will appear in your dashboard as they come in.
+          </p>
+          <p class="text-sm text-[#2F2F2F]/50 max-w-sm mx-auto mb-8">
+            You may receive up to 3 responses.
+          </p>
+
           <a
             href={~p"/my-questions"}
-            class="bg-[#6F8F9D] text-white px-6 py-3 rounded-lg text-sm font-medium hover:bg-[#5a7a87] transition-colors inline-block"
+            class="inline-block bg-[#6F8F9D] text-white px-6 py-3 rounded-lg text-sm font-medium hover:bg-[#5a7a87] transition-colors"
           >
-            View my questions
+            Go to Dashboard
           </a>
         </div>
       <% end %>
     </div>
     """
+  end
+
+  # --- Events ---
+
+  @impl true
+  def handle_event("update_text", %{"value" => text}, socket) do
+    {:noreply,
+     socket
+     |> assign(:question_text, text)
+     |> assign(:char_count, String.length(String.trim(text)))}
+  end
+
+  @impl true
+  def handle_event("to_category", _params, socket) do
+    if socket.assigns.char_count >= 20 do
+      {:noreply, assign(socket, :step, :category)}
+    else
+      {:noreply, socket}
+    end
   end
 
   @impl true
@@ -149,51 +258,73 @@ defmodule WorthAskingWeb.QuestionLive do
   end
 
   @impl true
-  def handle_event("validate", %{"question" => params}, socket) do
-    {:noreply, assign(socket, :question_text, params["text"] || "")}
-  end
-
-  @impl true
-  def handle_event("cancel_upload", %{"ref" => ref}, socket) do
-    {:noreply, cancel_upload(socket, :images, ref)}
-  end
-
-  @impl true
-  def handle_event("submit_question", %{"question" => params}, socket) do
-    user = socket.assigns.current_scope.user
-
-    # Save uploaded images
-    image_paths =
-      consume_uploaded_entries(socket, :images, fn %{path: path}, entry ->
-        uploads_dir = Path.join(["priv", "static", "uploads", "questions"])
-        File.mkdir_p!(uploads_dir)
-        filename = "#{Ecto.UUID.generate()}-#{entry.client_name}"
-        dest = Path.join(uploads_dir, filename)
-        File.cp!(path, dest)
-        {:ok, "/uploads/questions/#{filename}"}
-      end)
-
-    attrs = %{
-      "text" => params["text"],
-      "category" => to_string(socket.assigns.category),
-      "image_paths" => image_paths
-    }
-
-    case Questions.create_question(user, attrs) do
-      {:ok, _question} ->
-        {:noreply, assign(socket, :step, :submitted)}
-
-      {:error, changeset} ->
-        {:noreply, assign(socket, changeset: changeset)}
+  def handle_event("to_review", _params, socket) do
+    if socket.assigns.category do
+      {:noreply, assign(socket, :step, :review)}
+    else
+      {:noreply, socket}
     end
   end
 
-  defp format_category(cat) do
-    cat |> to_string() |> String.replace("_", " ") |> String.split(" ") |> Enum.map(&String.capitalize/1) |> Enum.join(" ")
+  @impl true
+  def handle_event("back_to_question", _params, socket) do
+    {:noreply, assign(socket, :step, :question)}
   end
 
-  defp error_to_string(:too_large), do: "Too large (max 5MB)"
-  defp error_to_string(:not_accepted), do: "Invalid file type"
-  defp error_to_string(:too_many_files), do: "Too many files"
-  defp error_to_string(err), do: to_string(err)
+  @impl true
+  def handle_event("back_to_category", _params, socket) do
+    {:noreply, assign(socket, :step, :category)}
+  end
+
+  @impl true
+  def handle_event("pay_and_submit", _params, socket) do
+    user = socket.assigns.current_scope.user
+
+    if Questions.has_active_question?(user.id) do
+      {:noreply,
+       socket
+       |> put_flash(:error, "You already have an active question.")
+       |> redirect(to: ~p"/my-questions")}
+    else
+      attrs = %{
+        "text" => String.trim(socket.assigns.question_text),
+        "category" => to_string(socket.assigns.category),
+        "image_paths" => []
+      }
+
+      case Questions.create_question(user, attrs) do
+        {:ok, question} ->
+          # Demo payment: auto-complete
+          case Questions.create_payment(question, user, @price_cents) do
+            {:ok, payment} ->
+              payment
+              |> Ecto.Changeset.change(status: :completed)
+              |> WorthAsking.Repo.update()
+
+              Questions.update_question_status(question, :paid)
+
+            _ ->
+              :ok
+          end
+
+          {:noreply, assign(socket, :step, :confirmed)}
+
+        {:error, _changeset} ->
+          {:noreply, assign(socket, :error, "Could not submit your question. Please try again.")}
+      end
+    end
+  end
+
+  # --- Helpers ---
+
+  defp format_price(cents) do
+    dollars = div(cents, 100)
+    remainder = rem(cents, 100)
+    "$#{dollars}.#{String.pad_leading(Integer.to_string(remainder), 2, "0")}"
+  end
+
+  defp step_complete?(check_step, current_step) do
+    order = %{question: 0, category: 1, review: 2, confirmed: 3}
+    Map.get(order, check_step, 0) < Map.get(order, current_step, 0)
+  end
 end
