@@ -87,49 +87,33 @@ defmodule WorthAskingWeb.ContributorApplyLive do
   @total_steps 4
 
   @impl true
-  def mount(_params, _session, socket) do
-    scope = socket.assigns[:current_scope]
-    user = scope && scope.user
+  def mount(_params, session, socket) do
+    applicant_email = session["applicant_email"]
 
-    unless user do
+    unless applicant_email do
       {:ok,
        socket
-       |> put_flash(:error, "You must log in to apply.")
-       |> redirect(to: ~p"/users/log-in")}
+       |> put_flash(:error, "Please enter your email to apply.")
+       |> redirect(to: ~p"/advisors/join")}
     else
-      # Check if user already has a pending/approved application
-      case Contributors.get_profile_by_user(user.id) do
-        %{application_status: :approved} ->
-          {:ok,
-           socket
-           |> put_flash(:info, "You're already an approved advisor!")
-           |> redirect(to: ~p"/dashboard")}
+      # Select 3 scenario questions for this applicant
+      scenarios = @scenario_questions |> Enum.shuffle() |> Enum.take(3)
 
-        %{application_status: :pending} ->
-          {:ok,
-           socket
-           |> assign(:page_title, "Application Pending")
-           |> assign(:step, :already_applied)}
-
-        _ ->
-          # Select 3 scenario questions for this applicant
-          scenarios = @scenario_questions |> Enum.shuffle() |> Enum.take(3)
-
-          {:ok,
-           socket
-           |> assign(:page_title, "Become an Advisor")
-           |> assign(:total_steps, @total_steps)
-           |> assign(:step, 1)
-           |> assign(:display_name, "")
-           |> assign(:bio, "")
-           |> assign(:categories, [])
-           |> assign(:scenario_questions, scenarios)
-           |> assign(:scenario_responses, %{})
-           |> assign(:judgment_answers, %{})
-           |> assign(:motivation, "")
-           |> assign(:agreement, false)
-           |> assign(:error, nil)}
-      end
+      {:ok,
+       socket
+       |> assign(:page_title, "Become an Advisor")
+       |> assign(:applicant_email, applicant_email)
+       |> assign(:total_steps, @total_steps)
+       |> assign(:step, 1)
+       |> assign(:display_name, "")
+       |> assign(:bio, "")
+       |> assign(:categories, [])
+       |> assign(:scenario_questions, scenarios)
+       |> assign(:scenario_responses, %{})
+       |> assign(:judgment_answers, %{})
+       |> assign(:motivation, "")
+       |> assign(:agreement, false)
+       |> assign(:error, nil)}
     end
   end
 
@@ -616,56 +600,84 @@ defmodule WorthAskingWeb.ContributorApplyLive do
 
   @impl true
   def handle_event("submit_application", _params, socket) do
-    user = socket.assigns.current_scope.user
+    email = socket.assigns.applicant_email
 
-    # Build sample_responses as a structured map for admin review
-    scenario_data =
-      socket.assigns.scenario_questions
-      |> Enum.map(fn scenario ->
-        %{
-          "scenario" => scenario.scenario,
-          "category" => to_string(scenario.category),
-          "evaluates" => scenario.evaluates,
-          "response" => Map.get(socket.assigns.scenario_responses, scenario.id, "")
+    # Find or create the user
+    alias WorthAsking.Accounts
+    alias WorthAsking.Accounts.User
+
+    user =
+      case Accounts.get_user_by_email(email) do
+        %User{} = existing -> {:ok, existing}
+        nil -> Accounts.register_user(%{email: email})
+      end
+
+    case user do
+      {:ok, user} ->
+        # Confirm user if needed
+        user =
+          if user.confirmed_at do
+            user
+          else
+            {:ok, confirmed} =
+              user
+              |> User.confirm_changeset()
+              |> WorthAsking.Repo.update()
+            confirmed
+          end
+
+        # Build sample_responses as a structured map for admin review
+        scenario_data =
+          socket.assigns.scenario_questions
+          |> Enum.map(fn scenario ->
+            %{
+              "scenario" => scenario.scenario,
+              "category" => to_string(scenario.category),
+              "evaluates" => scenario.evaluates,
+              "response" => Map.get(socket.assigns.scenario_responses, scenario.id, "")
+            }
+          end)
+
+        # Score judgment answers
+        judgment_score = calculate_judgment_score(socket.assigns.judgment_answers)
+
+        judgment_data =
+          judgment_questions()
+          |> Enum.map(fn jq ->
+            chosen = Map.get(socket.assigns.judgment_answers, jq.id)
+            %{"question" => jq.question, "answer" => chosen}
+          end)
+
+        sample_responses = %{
+          "scenarios" => scenario_data,
+          "judgment" => judgment_data,
+          "judgment_score" => judgment_score,
+          "motivation" => socket.assigns.motivation
         }
-      end)
 
-    # Score judgment answers
-    judgment_score = calculate_judgment_score(socket.assigns.judgment_answers)
+        attrs = %{
+          display_name: socket.assigns.display_name,
+          bio: socket.assigns.bio,
+          categories: socket.assigns.categories,
+          sample_responses: sample_responses
+        }
 
-    judgment_data =
-      judgment_questions()
-      |> Enum.map(fn jq ->
-        chosen = Map.get(socket.assigns.judgment_answers, jq.id)
-        %{"question" => jq.question, "answer" => chosen}
-      end)
+        case Contributors.apply_as_contributor(user, attrs) do
+          {:ok, _profile} ->
+            # Send "application under review" email
+            UserNotifier.deliver_application_received(user)
 
-    sample_responses = %{
-      "scenarios" => scenario_data,
-      "judgment" => judgment_data,
-      "judgment_score" => judgment_score,
-      "motivation" => socket.assigns.motivation
-    }
+            {:noreply,
+             socket
+             |> assign(:error, nil)
+             |> assign(:step, :submitted)}
 
-    attrs = %{
-      display_name: socket.assigns.display_name,
-      bio: socket.assigns.bio,
-      categories: socket.assigns.categories,
-      sample_responses: sample_responses
-    }
-
-    case Contributors.apply_as_contributor(user, attrs) do
-      {:ok, _profile} ->
-        # Send "application under review" email
-        UserNotifier.deliver_application_received(user)
-
-        {:noreply,
-         socket
-         |> assign(:error, nil)
-         |> assign(:step, :submitted)}
+          {:error, _changeset} ->
+            {:noreply, assign(socket, :error, "Something went wrong. Please try again.")}
+        end
 
       {:error, _changeset} ->
-        {:noreply, assign(socket, :error, "Something went wrong. Please try again.")}
+        {:noreply, assign(socket, :error, "Something went wrong with your email. Please try again.")}
     end
   end
 

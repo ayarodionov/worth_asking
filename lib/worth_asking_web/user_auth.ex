@@ -198,7 +198,10 @@ defmodule WorthAskingWeb.UserAuth do
   Returns session data to pass to LiveView sessions.
   """
   def live_session_data(conn) do
-    %{"user_token" => get_session(conn, :user_token)}
+    %{
+      "user_token" => get_session(conn, :user_token),
+      "applicant_email" => get_session(conn, :applicant_email)
+    }
   end
 
   defp signed_in_path(_conn), do: ~p"/"
