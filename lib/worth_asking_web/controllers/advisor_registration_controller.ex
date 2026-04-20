@@ -15,49 +15,33 @@ defmodule WorthAskingWeb.AdvisorRegistrationController do
     end
   end
 
-  def create(conn, %{"user" => user_params}) do
-    email = user_params["email"]
-    phone = user_params["phone"]
-
+  def create(conn, %{"user" => %{"email" => email}}) do
     # If already logged in, skip straight to the application
     if conn.assigns.current_scope && conn.assigns.current_scope.user do
       conn
       |> redirect(to: ~p"/contributors/apply")
     else
-      case Accounts.get_user_by_email(email) do
-        %User{} = user ->
-          # Existing user — update phone if provided, send magic link
-          if phone && phone != "" do
-            Accounts.update_user_phone(user, phone)
-          end
+      user =
+        case Accounts.get_user_by_email(email) do
+          %User{} = existing -> {:ok, existing}
+          nil -> Accounts.register_user(%{email: email})
+        end
 
-          Accounts.deliver_login_instructions(
-            user,
-            &url(~p"/users/log-in/#{&1}")
-          )
+      case user do
+        {:ok, user} ->
+          # Confirm user if not yet confirmed so they can proceed
+          unless user.confirmed_at do
+            user
+            |> User.confirm_changeset()
+            |> WorthAsking.Repo.update()
+          end
 
           conn
           |> put_session(:user_return_to, ~p"/contributors/apply")
-          |> put_flash(:info, "You already have an account! Check your email for a login link — it will take you straight to the advisor application.")
-          |> redirect(to: ~p"/advisors/join")
+          |> WorthAskingWeb.UserAuth.log_in_user(user, %{"remember_me" => "true"})
 
-        nil ->
-          # New user — register with phone and send magic link
-          case Accounts.register_user(%{email: email, phone: phone}) do
-            {:ok, user} ->
-              Accounts.deliver_login_instructions(
-                user,
-                &url(~p"/users/log-in/#{&1}")
-              )
-
-              conn
-              |> put_session(:user_return_to, ~p"/contributors/apply")
-              |> put_flash(:info, "Check your email! Click the link to verify your account and start your advisor application.")
-              |> redirect(to: ~p"/advisors/join")
-
-            {:error, changeset} ->
-              render(conn, :new, changeset: changeset)
-          end
+        {:error, changeset} ->
+          render(conn, :new, changeset: changeset)
       end
     end
   end

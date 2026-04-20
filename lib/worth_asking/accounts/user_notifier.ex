@@ -183,4 +183,35 @@ defmodule WorthAsking.Accounts.UserNotifier do
     — Worth Asking
     """)
   end
+
+  @doc """
+  Notify a contributor applicant that their application has been received and is under review.
+  """
+  def deliver_application_received(user) do
+    deliver(user.email, "We've received your application — Worth Asking", """
+    Hi,
+
+    Thank you for applying to become a Contributor on Worth Asking.
+
+    We've received your application and are reviewing it now. We read every response carefully to make sure our contributor community reflects the kind of thoughtful, grounded perspective our users are looking for.
+
+    You don't need to do anything else at this point. We'll be in touch within 48 hours with a decision.
+
+
+    WHAT HAPPENS NEXT
+
+    If your application is accepted, you'll receive an email with a link to complete your profile and set up your account — including payment details and notification preferences.
+
+    From there, you'll start receiving questions and earning money for your responses.
+
+
+    IN THE MEANTIME
+
+    If you have any questions, you can reply directly to this email.
+
+    We appreciate you taking the time to apply.
+
+    — Worth Asking
+    """)
+  end
 end

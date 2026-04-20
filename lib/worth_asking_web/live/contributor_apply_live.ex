@@ -2,6 +2,7 @@ defmodule WorthAskingWeb.ContributorApplyLive do
   use WorthAskingWeb, :live_view
 
   alias WorthAsking.Contributors
+  alias WorthAsking.Accounts.UserNotifier
 
   @categories [:communication, :first_impressions, :style, :dating_dynamics]
 
@@ -655,6 +656,9 @@ defmodule WorthAskingWeb.ContributorApplyLive do
 
     case Contributors.apply_as_contributor(user, attrs) do
       {:ok, _profile} ->
+        # Send "application under review" email
+        UserNotifier.deliver_application_received(user)
+
         {:noreply,
          socket
          |> assign(:error, nil)
