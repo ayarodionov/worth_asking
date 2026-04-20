@@ -30,7 +30,9 @@ defmodule WorthAskingWeb.Router do
   scope "/", WorthAskingWeb do
     pipe_through :browser
 
-    live_session :public, on_mount: [{WorthAskingWeb.UserAuth, :mount_current_scope}] do
+    live_session :public,
+      on_mount: [{WorthAskingWeb.UserAuth, :mount_current_scope}],
+      session: {WorthAskingWeb.UserAuth, :live_session_data, []} do
       live "/welcome", OnboardingLive
       live "/about", AboutLive
       live "/field-notes", FieldNotesLive
