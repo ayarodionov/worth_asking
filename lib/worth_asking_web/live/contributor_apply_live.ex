@@ -104,24 +104,50 @@ defmodule WorthAskingWeb.ContributorApplyLive do
        |> put_flash(:error, "Please enter your email to apply.")
        |> redirect(to: ~p"/advisors/join")}
     else
-      # Select 3 scenario questions for this applicant
-      scenarios = @scenario_questions |> Enum.shuffle() |> Enum.take(3)
+      # Check if this email already has a pending or approved application
+      alias WorthAsking.Accounts
+      existing_user = Accounts.get_user_by_email(email)
 
-      {:ok,
-       socket
-       |> assign(:page_title, "Become an Advisor")
-       |> assign(:applicant_email, email)
-       |> assign(:total_steps, @total_steps)
-       |> assign(:step, 1)
-       |> assign(:display_name, "")
-       |> assign(:bio, "")
-       |> assign(:categories, [])
-       |> assign(:scenario_questions, scenarios)
-       |> assign(:scenario_responses, %{})
-       |> assign(:judgment_answers, %{})
-       |> assign(:motivation, "")
-       |> assign(:agreement, false)
-       |> assign(:error, nil)}
+      existing_profile =
+        if existing_user,
+          do: Contributors.get_profile_by_user(existing_user.id),
+          else: nil
+
+      cond do
+        existing_profile && existing_profile.application_status == :approved ->
+          {:ok,
+           socket
+           |> assign(:page_title, "Already Approved")
+           |> assign(:applicant_email, email)
+           |> assign(:step, :already_approved)}
+
+        existing_profile && existing_profile.application_status == :pending ->
+          {:ok,
+           socket
+           |> assign(:page_title, "Application Submitted")
+           |> assign(:applicant_email, email)
+           |> assign(:step, :submitted)}
+
+        true ->
+          # Select 3 scenario questions for this applicant
+          scenarios = @scenario_questions |> Enum.shuffle() |> Enum.take(3)
+
+          {:ok,
+           socket
+           |> assign(:page_title, "Become an Advisor")
+           |> assign(:applicant_email, email)
+           |> assign(:total_steps, @total_steps)
+           |> assign(:step, 1)
+           |> assign(:display_name, "")
+           |> assign(:bio, "")
+           |> assign(:categories, [])
+           |> assign(:scenario_questions, scenarios)
+           |> assign(:scenario_responses, %{})
+           |> assign(:judgment_answers, %{})
+           |> assign(:motivation, "")
+           |> assign(:agreement, false)
+           |> assign(:error, nil)}
+      end
     end
   end
 
@@ -132,21 +158,6 @@ defmodule WorthAskingWeb.ContributorApplyLive do
       <a href={~p"/"} class="text-sm text-[#6F8F9D] hover:underline mb-8 inline-block">
         &larr; Back
       </a>
-
-      <%!-- Already applied --%>
-      <%= if @step == :already_applied do %>
-        <div class="text-center py-16">
-          <div class="w-14 h-14 rounded-full bg-yellow-50 flex items-center justify-center mx-auto mb-5">
-            <span class="text-yellow-600 text-2xl">&#9202;</span>
-          </div>
-          <h1 class="text-2xl font-semibold text-[#2F2F2F] mb-3" style="font-family: Georgia, serif;">
-            Application under review
-          </h1>
-          <p class="text-sm text-[#2F2F2F]/60 max-w-sm mx-auto">
-            We've received your application and are reviewing it. You'll receive an email once a decision has been made.
-          </p>
-        </div>
-      <% end %>
 
       <%!-- Active application flow --%>
       <%= if is_integer(@step) and @step <= @total_steps do %>
@@ -484,7 +495,7 @@ defmodule WorthAskingWeb.ContributorApplyLive do
         </div>
       <% end %>
 
-      <%!-- Confirmation --%>
+      <%!-- Confirmation / already submitted --%>
       <%= if @step == :submitted do %>
         <div class="text-center py-16">
           <div class="w-14 h-14 rounded-full bg-[#A8BDA4]/20 flex items-center justify-center mx-auto mb-5">
@@ -498,6 +509,27 @@ defmodule WorthAskingWeb.ContributorApplyLive do
           </p>
           <p class="text-sm text-[#2F2F2F]/60 mb-8 max-w-md mx-auto">
             You'll receive an email within 48 hours with our decision.
+          </p>
+          <a
+            href={~p"/"}
+            class="bg-[#6F8F6B] text-white px-6 py-3 rounded-lg text-sm font-medium hover:bg-[#5a7a57] transition-colors inline-block"
+          >
+            Back to home
+          </a>
+        </div>
+      <% end %>
+
+      <%!-- Already approved --%>
+      <%= if @step == :already_approved do %>
+        <div class="text-center py-16">
+          <div class="w-14 h-14 rounded-full bg-[#A8BDA4]/20 flex items-center justify-center mx-auto mb-5">
+            <span class="text-[#6F8F6B] text-2xl">&#9734;</span>
+          </div>
+          <h1 class="text-2xl font-semibold text-[#2F2F2F] mb-3" style="font-family: Georgia, serif;">
+            You're already approved!
+          </h1>
+          <p class="text-sm text-[#2F2F2F]/60 mb-8 max-w-md mx-auto">
+            Check your email for the onboarding link to set up your profile and get started.
           </p>
           <a
             href={~p"/"}
