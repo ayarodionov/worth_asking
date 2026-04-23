@@ -106,9 +106,34 @@ defmodule WorthAskingWeb.UserSessionController do
     case Accounts.verify_onboarding_token(token) do
       {:ok, user} ->
         if user.role == :contributor do
+          # Create session without server-side redirect.
+          # Render a page that does client-side redirect so cookies are stored first.
+          token = Accounts.generate_user_session_token(user)
+
           conn
-          |> put_flash(:info, "Welcome to Worth Asking!")
-          |> UserAuth.log_in_user(user, %{"remember_me" => "true"})
+          |> put_session(:user_token, token)
+          |> put_session(:user_remember_me, true)
+          |> put_resp_cookie("_worth_asking_web_user_remember_me", token,
+            sign: true,
+            max_age: 14 * 24 * 60 * 60,
+            same_site: "Lax"
+          )
+          |> put_resp_content_type("text/html")
+          |> send_resp(200, """
+          <!DOCTYPE html>
+          <html>
+          <head>
+            <meta http-equiv="refresh" content="0;url=/contributors/onboarding">
+            <style>
+              body { display: flex; align-items: center; justify-content: center; min-height: 100vh; font-family: Georgia, serif; background: #F7F7F5; color: #2F2F2F; }
+            </style>
+          </head>
+          <body>
+            <p>Welcome to Worth Asking — setting up your profile...</p>
+            <script>window.location.href = "/contributors/onboarding";</script>
+          </body>
+          </html>
+          """)
         else
           conn
           |> put_flash(:error, "Invalid onboarding link.")
@@ -118,6 +143,30 @@ defmodule WorthAskingWeb.UserSessionController do
       {:error, _} ->
         conn
         |> put_flash(:error, "This onboarding link is invalid or has expired. Please contact support.")
+        |> redirect(to: ~p"/users/log-in")
+    end
+  end
+
+  @doc """
+  Creates a session for a contributor using their onboarding token,
+  then redirects to the guidelines or dashboard. No login page involved.
+  """
+  def activate_contributor(conn, %{"token" => token}) do
+    case Accounts.verify_onboarding_token(token) do
+      {:ok, user} ->
+        if user.role == :contributor do
+          conn
+          |> put_session(:user_return_to, ~p"/contributors/guidelines")
+          |> UserAuth.log_in_user(user, %{"remember_me" => "true"})
+        else
+          conn
+          |> put_flash(:error, "Invalid activation link.")
+          |> redirect(to: ~p"/")
+        end
+
+      {:error, _} ->
+        conn
+        |> put_flash(:error, "This link is invalid or has expired. Please contact support.")
         |> redirect(to: ~p"/users/log-in")
     end
   end

@@ -1,32 +1,58 @@
 defmodule WorthAskingWeb.ContributorOnboardingLive do
   use WorthAskingWeb, :live_view
 
-  alias WorthAsking.Contributors
+  alias WorthAsking.{Accounts, Contributors}
+
   @impl true
-  def mount(_params, _session, socket) do
-    user = socket.assigns.current_scope.user
-    profile = Contributors.get_profile_by_user(user.id)
+  def mount(params, _session, socket) do
+    # Try to get user from session first, then from token param
+    user = get_user_from_scope(socket) || get_user_from_token(params)
 
-    if is_nil(profile) || profile.application_status != :approved do
-      {:ok, push_navigate(socket, to: ~p"/")}
+    if is_nil(user) do
+      {:ok,
+       socket
+       |> put_flash(:error, "Invalid or expired link. Please contact support.")
+       |> push_navigate(to: ~p"/")}
     else
-      if profile.onboarding_completed do
-        {:ok, push_navigate(socket, to: ~p"/dashboard")}
+      profile = Contributors.get_profile_by_user(user.id)
+
+      if is_nil(profile) || profile.application_status != :approved do
+        {:ok, push_navigate(socket, to: ~p"/")}
       else
-        form = build_form(profile, user)
+        if profile.onboarding_completed do
+          {:ok, push_navigate(socket, to: ~p"/dashboard")}
+        else
+          form = build_form(profile, user)
 
-        socket =
-          socket
-          |> assign(:page_title, "Complete Your Contributor Profile")
-          |> assign(:profile, profile)
-          |> assign(:user, user)
-          |> assign(:form, form)
-          |> assign(:stripe_status, stripe_status(profile))
+          socket =
+            socket
+            |> assign(:page_title, "Complete Your Contributor Profile")
+            |> assign(:profile, profile)
+            |> assign(:user, user)
+            |> assign(:form, form)
+            |> assign(:stripe_status, stripe_status(profile))
 
-        {:ok, socket}
+          {:ok, socket}
+        end
       end
     end
   end
+
+  defp get_user_from_scope(socket) do
+    case socket.assigns do
+      %{current_scope: %{user: %{id: _} = user}} -> user
+      _ -> nil
+    end
+  end
+
+  defp get_user_from_token(%{"token" => token}) do
+    case Accounts.verify_onboarding_token(token) do
+      {:ok, user} -> user
+      _ -> nil
+    end
+  end
+
+  defp get_user_from_token(_), do: nil
 
   defp build_form(profile, user) do
     data = %{
@@ -425,10 +451,13 @@ defmodule WorthAskingWeb.ContributorOnboardingLive do
       {:ok, _updated_user} ->
         case Contributors.complete_onboarding(profile, profile_attrs, user, user_attrs) do
           {:ok, _profile} ->
+            # Generate a fresh token to create a session via controller redirect
+            token = Accounts.generate_onboarding_token(user)
+
             {:noreply,
              socket
              |> put_flash(:info, "Profile setup complete.")
-             |> push_navigate(to: ~p"/contributors/guidelines")}
+             |> redirect(to: ~p"/contributors/activate/#{token}")}
 
           {:error, changeset} ->
             {:noreply,

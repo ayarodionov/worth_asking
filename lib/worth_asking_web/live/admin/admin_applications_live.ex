@@ -190,7 +190,7 @@ defmodule WorthAskingWeb.Admin.AdminApplicationsLive do
         # Send approval email with direct onboarding link
         user = approved_profile.user
         token = Accounts.generate_onboarding_token(user)
-        onboarding_url = WorthAskingWeb.Endpoint.url() <> "/contributors/setup/" <> token
+        onboarding_url = WorthAskingWeb.Endpoint.url() <> "/contributors/onboarding/" <> token
         Accounts.deliver_approval_notification(user, onboarding_url)
 
         applications = Contributors.list_pending_applications()

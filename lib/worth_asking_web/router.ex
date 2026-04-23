@@ -35,17 +35,29 @@ defmodule WorthAskingWeb.Router do
     get "/", PageController, :home
     get "/contributors/join", AdvisorRegistrationController, :new
     post "/contributors/join", AdvisorRegistrationController, :create
-    get "/contributors/setup/:token", UserSessionController, :setup_onboarding
+    get "/contributors/activate/:token", UserSessionController, :activate_contributor
   end
 
-  # Contributor-only routes (must be before public /contributors/:id catch-all)
+  # Contributor onboarding — no auth required, LiveView handles token verification
+  # Must be before public /contributors/:id catch-all
+  scope "/", WorthAskingWeb do
+    pipe_through [:browser]
+
+    live_session :contributor_onboarding,
+      on_mount: [{WorthAskingWeb.UserAuth, :mount_current_scope}],
+      session: {WorthAskingWeb.UserAuth, :live_session_data, []} do
+      live "/contributors/onboarding/:token", ContributorOnboardingLive
+      live "/contributors/onboarding", ContributorOnboardingLive
+      live "/contributors/guidelines", ContributorGuidelinesLive
+    end
+  end
+
+  # Contributor dashboard routes (require auth at plug level)
   scope "/", WorthAskingWeb do
     pipe_through [:browser, :require_authenticated_user]
 
     live_session :contributor,
       on_mount: [{WorthAskingWeb.UserAuth, :require_contributor}] do
-      live "/contributors/onboarding", ContributorOnboardingLive
-      live "/contributors/guidelines", ContributorGuidelinesLive
       live "/dashboard", ContributorDashboardLive
       live "/dashboard/respond/:question_id", ContributorResponseLive
     end
