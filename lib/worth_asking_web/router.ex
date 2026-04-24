@@ -33,6 +33,8 @@ defmodule WorthAskingWeb.Router do
     pipe_through :browser
 
     get "/", PageController, :home
+    get "/ask", PageController, :ask
+    post "/ask", PageController, :create_and_ask
     get "/contributors/join", AdvisorRegistrationController, :new
     post "/contributors/join", AdvisorRegistrationController, :create
     get "/contributors/activate/:token", UserSessionController, :activate_contributor

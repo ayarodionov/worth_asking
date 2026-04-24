@@ -1,148 +1,200 @@
 <Layouts.flash_group flash={@flash} />
 
-<div class="max-w-3xl mx-auto px-6 py-16 lg:py-24">
+<div class="max-w-3xl mx-auto px-6">
   <%!-- Hero --%>
-  <div class="text-center mb-16">
-    <h1 class="text-4xl lg:text-5xl font-semibold tracking-tight mb-4" style="font-family: Georgia, serif;">
-      Worth Asking
+  <div class="text-center py-16 lg:py-24">
+    <h1 class="text-4xl lg:text-5xl font-semibold tracking-tight mb-5 leading-tight" style="font-family: Georgia, serif;">
+      Ask women what you actually want to know.
     </h1>
-    <p class="text-lg text-[#2F2F2F]/70 max-w-lg mx-auto">
-      Honest perspective from real women. No judgment. No games. Just clarity.
+    <p class="text-lg text-[#2F2F2F]/70 max-w-2xl mx-auto mb-4 leading-relaxed">
+      Get honest, anonymous perspective from real women on dating, relationships, style, grooming, communication, sex, gifts, work situations, and the questions you may not want to ask people in your real life.
     </p>
+    <p class="text-sm text-[#2F2F2F]/40 mb-8">
+      Anonymous &bull; Direct &bull; No judgment &bull; Real female perspective
+    </p>
+    <div class="flex items-center justify-center gap-4">
+      <a
+        href="#ask"
+        class="bg-[#6F8F9D] text-white px-6 py-3 rounded-lg text-sm font-medium hover:bg-[#5a7a87] transition-colors"
+      >
+        Ask a Question
+      </a>
+      <a
+        href="#how-it-works"
+        class="border border-[#E4E6E3] text-[#2F2F2F]/70 px-6 py-3 rounded-lg text-sm font-medium hover:border-[#6F8F9D] hover:text-[#6F8F9D] transition-colors"
+      >
+        See How It Works
+      </a>
+    </div>
   </div>
 
-  <%!-- Two clear paths --%>
-  <div class="grid md:grid-cols-2 gap-6 mb-16">
-    <%!-- Men: Ask a question --%>
-    <div class="bg-white border border-[#E4E6E3] rounded-lg p-8">
-      <p class="text-xs font-medium text-[#2F2F2F]/40 uppercase tracking-wider mb-3">For men</p>
-      <h2 class="text-2xl font-semibold mb-3" style="font-family: Georgia, serif;">
-        Ask a question
+  <%!-- Question Input Section --%>
+  <div id="ask" class="mb-20 scroll-mt-8">
+    <div class="bg-white border border-[#E4E6E3] rounded-lg p-8 max-w-xl mx-auto">
+      <h2 class="text-2xl font-semibold mb-2" style="font-family: Georgia, serif;">
+        What do you want to ask?
       </h2>
-      <p class="text-[#2F2F2F]/60 text-sm mb-6 leading-relaxed">
-        Get thoughtful, anonymous responses from women about communication, dating, style, and first impressions.
+      <p class="text-sm text-[#2F2F2F]/50 mb-6">
+        Type your question below. You'll create a free account after this so we know where to send your responses.
       </p>
-      <form action={~p"/questions/new"} method="get" class="mb-4">
+      <form action={~p"/ask"} method="get">
         <textarea
           name="q"
-          rows="3"
-          placeholder="What's on your mind?"
-          class="w-full border border-[#E4E6E3] rounded-md p-3 text-sm resize-none focus:outline-none focus:border-[#6F8F9D] focus:ring-1 focus:ring-[#6F8F9D] bg-[#F7F7F5]"
+          rows="4"
+          required
+          minlength="20"
+          placeholder="Example: &quot;What does it mean if she says she's not ready for anything serious but still texts me every day?&quot;"
+          class="w-full border border-[#E4E6E3] rounded-lg p-4 text-sm resize-none focus:outline-none focus:border-[#6F8F9D] focus:ring-1 focus:ring-[#6F8F9D] bg-[#F7F7F5] leading-relaxed"
         ></textarea>
         <button
           type="submit"
-          class="mt-3 w-full bg-[#6F8F9D] text-white py-3 rounded-md text-sm font-medium hover:bg-[#5a7a87] transition-colors"
+          class="mt-4 w-full bg-[#6F8F9D] text-white py-3 rounded-lg text-sm font-medium hover:bg-[#5a7a87] transition-colors"
         >
-          Get a second perspective
+          Continue
         </button>
       </form>
-      <p class="text-xs text-[#2F2F2F]/40 text-center">
-        New here? <a href={~p"/welcome"} class="text-[#6F8F9D] hover:underline">See how it works</a>
+      <p class="text-xs text-center text-[#2F2F2F]/40 mt-3">
+        Free to start &bull; Your question stays anonymous
       </p>
     </div>
+  </div>
 
-    <%!-- Women: Become a contributor --%>
-    <div class="bg-[#A8BDA4]/10 border-2 border-[#A8BDA4] rounded-lg p-8">
-      <p class="text-xs font-medium text-[#6F8F6B] uppercase tracking-wider mb-3">For women</p>
-      <h2 class="text-2xl font-semibold mb-3" style="font-family: Georgia, serif;">
-        Become a contributor
-      </h2>
-      <p class="text-[#2F2F2F]/60 text-sm mb-6 leading-relaxed">
-        Share your perspective and get paid for thoughtful responses. Help men understand what they're missing.
-      </p>
-      <ul class="space-y-3 mb-6">
-        <li class="flex items-start gap-2 text-sm text-[#2F2F2F]/70">
-          <span class="text-[#6F8F6B] mt-0.5">&#10003;</span>
-          Respond on your own schedule
+  <%!-- How It Works --%>
+  <div id="how-it-works" class="mb-20 scroll-mt-8">
+    <h2 class="text-sm font-medium text-[#2F2F2F]/50 uppercase tracking-wider mb-8 text-center">
+      How Worth Asking Works
+    </h2>
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div class="text-center">
+        <div class="w-10 h-10 rounded-full bg-[#6F8F9D]/10 flex items-center justify-center mx-auto mb-3">
+          <span class="text-sm font-semibold text-[#6F8F9D]">1</span>
+        </div>
+        <h3 class="font-medium mb-1">Ask your question</h3>
+        <p class="text-xs text-[#2F2F2F]/50 leading-relaxed">
+          Write the thing you actually want a woman's perspective on.
+        </p>
+      </div>
+      <div class="text-center">
+        <div class="w-10 h-10 rounded-full bg-[#6F8F9D]/10 flex items-center justify-center mx-auto mb-3">
+          <span class="text-sm font-semibold text-[#6F8F9D]">2</span>
+        </div>
+        <h3 class="font-medium mb-1">We send it to contributors</h3>
+        <p class="text-xs text-[#2F2F2F]/50 leading-relaxed">
+          Your question is matched with women whose selected topics fit your question.
+        </p>
+      </div>
+      <div class="text-center">
+        <div class="w-10 h-10 rounded-full bg-[#6F8F9D]/10 flex items-center justify-center mx-auto mb-3">
+          <span class="text-sm font-semibold text-[#6F8F9D]">3</span>
+        </div>
+        <h3 class="font-medium mb-1">Get honest responses</h3>
+        <p class="text-xs text-[#2F2F2F]/50 leading-relaxed">
+          Receive multiple perspectives from women who are not emotionally involved in your situation.
+        </p>
+      </div>
+      <div class="text-center">
+        <div class="w-10 h-10 rounded-full bg-[#6F8F9D]/10 flex items-center justify-center mx-auto mb-3">
+          <span class="text-sm font-semibold text-[#6F8F9D]">4</span>
+        </div>
+        <h3 class="font-medium mb-1">Use what helps</h3>
+        <p class="text-xs text-[#2F2F2F]/50 leading-relaxed">
+          Read the responses, compare perspectives, and decide what makes sense for you.
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <%!-- Why Create an Account --%>
+  <div class="mb-20">
+    <div class="bg-[#F7F7F5] border border-[#E4E6E3] rounded-lg p-8 max-w-xl mx-auto">
+      <h3 class="font-medium mb-3">Why create an account?</h3>
+      <p class="text-sm text-[#2F2F2F]/60 mb-3">We need an account so you can:</p>
+      <ul class="space-y-2 text-sm text-[#2F2F2F]/60">
+        <li class="flex items-start gap-2">
+          <span class="text-[#6F8F9D] mt-0.5">&#10003;</span>
+          Save your question
         </li>
-        <li class="flex items-start gap-2 text-sm text-[#2F2F2F]/70">
-          <span class="text-[#6F8F6B] mt-0.5">&#10003;</span>
-          Earn money for each response
+        <li class="flex items-start gap-2">
+          <span class="text-[#6F8F9D] mt-0.5">&#10003;</span>
+          Receive your responses
         </li>
-        <li class="flex items-start gap-2 text-sm text-[#2F2F2F]/70">
-          <span class="text-[#6F8F6B] mt-0.5">&#10003;</span>
-          Stay completely anonymous
+        <li class="flex items-start gap-2">
+          <span class="text-[#6F8F9D] mt-0.5">&#10003;</span>
+          Get notified when answers are ready
+        </li>
+        <li class="flex items-start gap-2">
+          <span class="text-[#6F8F9D] mt-0.5">&#10003;</span>
+          Ask follow-up questions
+        </li>
+        <li class="flex items-start gap-2">
+          <span class="text-[#6F8F9D] mt-0.5">&#10003;</span>
+          Keep your activity anonymous and private
         </li>
       </ul>
+    </div>
+  </div>
+
+  <%!-- FAQ --%>
+  <div class="mb-20">
+    <h2 class="text-sm font-medium text-[#2F2F2F]/50 uppercase tracking-wider mb-8 text-center">
+      Frequently Asked Questions
+    </h2>
+    <div class="space-y-6 max-w-xl mx-auto">
+      <div>
+        <h3 class="font-medium mb-1">Is this anonymous?</h3>
+        <p class="text-sm text-[#2F2F2F]/60 leading-relaxed">
+          Yes. Contributors do not see your name, email, or personal account details.
+        </p>
+      </div>
+      <div>
+        <h3 class="font-medium mb-1">Who answers the questions?</h3>
+        <p class="text-sm text-[#2F2F2F]/60 leading-relaxed">
+          Women contributors who have selected topics they are comfortable answering.
+        </p>
+      </div>
+      <div>
+        <h3 class="font-medium mb-1">Why do I need an account?</h3>
+        <p class="text-sm text-[#2F2F2F]/60 leading-relaxed">
+          So we can save your question, send your responses, and allow you to ask follow-ups.
+        </p>
+      </div>
+      <div>
+        <h3 class="font-medium mb-1">Is this therapy?</h3>
+        <p class="text-sm text-[#2F2F2F]/60 leading-relaxed">
+          No. Worth Asking is not therapy, counseling, or crisis support. It is a way to get honest female perspective on everyday questions.
+        </p>
+      </div>
+      <div>
+        <h3 class="font-medium mb-1">Can I ask about sex?</h3>
+        <p class="text-sm text-[#2F2F2F]/60 leading-relaxed">
+          Yes, as long as the question is respectful and does not involve illegal, harmful, or abusive content.
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <%!-- Contributor CTA --%>
+  <div class="mb-16 text-center">
+    <div class="border border-[#A8BDA4] rounded-lg p-8 bg-[#A8BDA4]/5 max-w-xl mx-auto">
+      <h2 class="text-xl font-semibold mb-2" style="font-family: Georgia, serif;">
+        Want to share your perspective?
+      </h2>
+      <p class="text-sm text-[#2F2F2F]/60 mb-4 leading-relaxed">
+        Join as a contributor. Respond on your schedule, stay anonymous, and earn money for thoughtful answers.
+      </p>
       <a
         href={~p"/contributors/join"}
-        class="block w-full text-center bg-[#6F8F6B] text-white py-3 rounded-md text-sm font-medium hover:bg-[#5a7a57] transition-colors"
+        class="inline-block bg-[#6F8F6B] text-white px-6 py-3 rounded-lg text-sm font-medium hover:bg-[#5a7a57] transition-colors"
       >
         Apply to be a contributor
       </a>
     </div>
   </div>
 
-  <%!-- Categories --%>
-  <div class="mb-16">
-    <h2 class="text-sm font-medium text-[#2F2F2F]/50 uppercase tracking-wider mb-6 text-center">
-      Topics you can ask about
-    </h2>
-    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
-      <div class="bg-white border border-[#E4E6E3] rounded-lg p-5 text-center">
-        <h3 class="font-medium mb-1">Communication</h3>
-        <p class="text-xs text-[#2F2F2F]/60">How to say what you mean</p>
-      </div>
-      <div class="bg-white border border-[#E4E6E3] rounded-lg p-5 text-center">
-        <h3 class="font-medium mb-1">First Impressions</h3>
-        <p class="text-xs text-[#2F2F2F]/60">How you come across</p>
-      </div>
-      <div class="bg-white border border-[#E4E6E3] rounded-lg p-5 text-center">
-        <h3 class="font-medium mb-1">Style</h3>
-        <p class="text-xs text-[#2F2F2F]/60">Presentation and grooming</p>
-      </div>
-      <div class="bg-white border border-[#E4E6E3] rounded-lg p-5 text-center">
-        <h3 class="font-medium mb-1">Dating Dynamics</h3>
-        <p class="text-xs text-[#2F2F2F]/60">Reading signals</p>
-      </div>
-    </div>
-  </div>
-
-  <%!-- Sample Q&A --%>
-  <div class="space-y-8">
-    <h2 class="text-sm font-medium text-[#2F2F2F]/50 uppercase tracking-wider text-center">
-      Example questions
-    </h2>
-
-    <div class="bg-white border border-[#E4E6E3] rounded-lg p-6">
-      <p class="font-medium mb-3">
-        "We had a great date but she hasn't texted in 2 days. Do I follow up?"
-      </p>
-      <div class="relative">
-        <p class="text-[#2F2F2F]/70 text-sm leading-relaxed response-blurred">
-          Two days isn't necessarily a negative signal. Some people slow down after a first date to reset
-          their pace. A simple follow-up is reasonable, but keep it light and not overly invested.
-        </p>
-        <div class="absolute inset-0 flex items-center justify-center">
-          <span class="bg-[#6F8F9D] text-white px-4 py-2 rounded-md text-sm font-medium">
-            Unlock responses
-          </span>
-        </div>
-      </div>
-    </div>
-
-    <div class="bg-white border border-[#E4E6E3] rounded-lg p-6">
-      <p class="font-medium mb-3">
-        "Did I come off too strong?"
-      </p>
-      <div class="relative">
-        <p class="text-[#2F2F2F]/70 text-sm leading-relaxed response-blurred">
-          You showed interest, which isn't a problem. The only thing that might read as "too strong" is the
-          frequency of follow-up. Pulling back slightly could create a more balanced dynamic.
-        </p>
-        <div class="absolute inset-0 flex items-center justify-center">
-          <span class="bg-[#6F8F9D] text-white px-4 py-2 rounded-md text-sm font-medium">
-            Unlock responses
-          </span>
-        </div>
-      </div>
-    </div>
-  </div>
-
   <%!-- Footer --%>
-  <div class="mt-16 pt-8 border-t border-[#E4E6E3] text-center">
+  <div class="pt-8 border-t border-[#E4E6E3] text-center pb-12">
     <p class="text-sm text-[#2F2F2F]/40">
-      A tool for perspective and clarity.
+      Honest perspective. Anonymous questions. Real answers.
     </p>
   </div>
 </div>

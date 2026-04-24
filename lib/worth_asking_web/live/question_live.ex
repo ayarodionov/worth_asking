@@ -30,6 +30,22 @@ defmodule WorthAskingWeb.QuestionLive do
   end
 
   @impl true
+  def handle_params(params, _uri, socket) do
+    case params do
+      %{"q" => q} when q != "" ->
+        text = String.trim(q)
+
+        {:noreply,
+         socket
+         |> assign(:question_text, text)
+         |> assign(:char_count, String.length(text))}
+
+      _ ->
+        {:noreply, socket}
+    end
+  end
+
+  @impl true
   def render(assigns) do
     ~H"""
     <div class="max-w-xl mx-auto px-4 sm:px-6 py-8 sm:py-12">
@@ -45,10 +61,10 @@ defmodule WorthAskingWeb.QuestionLive do
       <%= if @step == :question do %>
         <div class="mb-8">
           <h1 class="text-2xl font-semibold mb-2" style="font-family: Georgia, serif;">
-            Ask Your Question
+            Ask your question
           </h1>
           <p class="text-sm text-[#2F2F2F]/50">
-            Ask honestly. Your question stays private.
+            This is anonymous. Contributors will not see your name, email, or personal account details.
           </p>
         </div>
 
@@ -58,16 +74,20 @@ defmodule WorthAskingWeb.QuestionLive do
               name="text"
               rows="6"
               phx-keyup="update_text"
-              placeholder="What do women actually think when&#8230;&#10;Why did this interaction feel off&#8230;&#10;How would this come across to a woman&#8230;"
+              placeholder="What do you want a woman's honest perspective on?"
               class="w-full border border-[#E4E6E3] rounded-lg p-4 text-base resize-none focus:outline-none focus:border-[#6F8F9D] focus:ring-1 focus:ring-[#6F8F9D] bg-white leading-relaxed"
             >{@question_text}</textarea>
             <p class={[
               "text-xs mt-2",
               if(@char_count < 20, do: "text-[#2F2F2F]/40", else: "text-[#6F8F6B]")
             ]}>
-              {@char_count} characters
-              <%= if @char_count < 20 do %>
-                <span class="text-[#2F2F2F]/30">(minimum 20)</span>
+              <%= if @char_count > 0 and @char_count < 20 do %>
+                Please enter a little more detail so contributors can give you a useful answer.
+              <% else %>
+                {@char_count} characters
+                <%= if @char_count < 20 do %>
+                  <span class="text-[#2F2F2F]/30">(minimum 20)</span>
+                <% end %>
               <% end %>
             </p>
           </div>
@@ -209,24 +229,44 @@ defmodule WorthAskingWeb.QuestionLive do
             <span class="text-[#6F8F6B] text-2xl">&#10003;</span>
           </div>
           <h1 class="text-2xl font-semibold mb-3" style="font-family: Georgia, serif;">
-            Your Question Has Been Sent
+            Your question has been submitted.
           </h1>
-          <p class="text-sm text-[#2F2F2F]/50 max-w-sm mx-auto mb-3">
-            We've sent your question to contributors who are comfortable answering in this category.
-          </p>
-          <p class="text-sm text-[#2F2F2F]/50 max-w-sm mx-auto mb-3">
-            Responses will appear in your dashboard as they come in.
-          </p>
           <p class="text-sm text-[#2F2F2F]/50 max-w-sm mx-auto mb-8">
-            You may receive up to 3 responses.
+            We'll send it to matching contributors and notify you when responses are ready.
           </p>
 
-          <a
-            href={~p"/my-questions"}
-            class="inline-block bg-[#6F8F9D] text-white px-6 py-3 rounded-lg text-sm font-medium hover:bg-[#5a7a87] transition-colors"
-          >
-            Go to Dashboard
-          </a>
+          <div class="bg-[#F7F7F5] border border-[#E4E6E3] rounded-lg p-6 max-w-sm mx-auto mb-8 text-left">
+            <p class="text-xs text-[#2F2F2F]/40 uppercase tracking-wider mb-3">What happens next</p>
+            <ol class="space-y-2 text-sm text-[#2F2F2F]/60">
+              <li class="flex gap-2">
+                <span class="text-[#6F8F9D] font-medium">1.</span>
+                Your question is reviewed and matched.
+              </li>
+              <li class="flex gap-2">
+                <span class="text-[#6F8F9D] font-medium">2.</span>
+                Contributors who fit the topic may respond.
+              </li>
+              <li class="flex gap-2">
+                <span class="text-[#6F8F9D] font-medium">3.</span>
+                You'll be notified when responses are available.
+              </li>
+            </ol>
+          </div>
+
+          <div class="space-y-3">
+            <a
+              href={~p"/my-questions"}
+              class="block bg-[#6F8F9D] text-white px-6 py-3 rounded-lg text-sm font-medium hover:bg-[#5a7a87] transition-colors"
+            >
+              Go to My Questions
+            </a>
+            <a
+              href={~p"/questions/new"}
+              class="block text-[#6F8F9D] text-sm hover:underline"
+            >
+              Ask another question
+            </a>
+          </div>
         </div>
       <% end %>
     </div>

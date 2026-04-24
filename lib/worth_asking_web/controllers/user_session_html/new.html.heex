@@ -1,20 +1,29 @@
 <Layouts.app flash={@flash} current_scope={@current_scope}>
   <div class="mx-auto max-w-sm space-y-4">
     <div class="text-center">
-      <.header>
-        <p>Log in</p>
-        <:subtitle>
-          <%= if @current_scope do %>
-            You need to reauthenticate to perform sensitive actions on your account.
-          <% else %>
-            Don't have an account? <.link
-              navigate={~p"/users/register"}
-              class="font-semibold text-brand hover:underline"
-              phx-no-format
-            >Sign up</.link> for an account now.
-          <% end %>
-        </:subtitle>
-      </.header>
+      <%= if @question_flow do %>
+        <.header>
+          <p>Log in to continue your question</p>
+          <:subtitle>
+            Your question is ready. Log in or create an account so we can save it and send your responses.
+          </:subtitle>
+        </.header>
+      <% else %>
+        <.header>
+          <p>Log in</p>
+          <:subtitle>
+            <%= if @current_scope do %>
+              You need to reauthenticate to perform sensitive actions on your account.
+            <% else %>
+              Don't have an account? <.link
+                navigate={~p"/users/register"}
+                class="font-semibold text-brand hover:underline"
+                phx-no-format
+              >Sign up</.link> for an account now.
+            <% end %>
+          </:subtitle>
+        </.header>
+      <% end %>
     </div>
 
     <div :if={local_mail_adapter?()} class="alert alert-info">
@@ -39,7 +48,7 @@
         phx-mounted={JS.focus()}
       />
       <.button class="btn btn-primary w-full">
-        Log in with email <span aria-hidden="true">→</span>
+        Log in with email <span aria-hidden="true">&rarr;</span>
       </.button>
     </.form>
 
@@ -63,11 +72,21 @@
         spellcheck="false"
       />
       <.button class="btn btn-primary w-full" name={@form[:remember_me].name} value="true">
-        Log in and stay logged in <span aria-hidden="true">→</span>
+        Log in and stay logged in <span aria-hidden="true">&rarr;</span>
       </.button>
       <.button class="btn btn-primary btn-soft w-full mt-2">
         Log in only this time
       </.button>
     </.form>
+
+    <%= if @question_flow do %>
+      <div class="text-center mt-4">
+        <p class="text-sm text-[#2F2F2F]/50">
+          Don't have an account?
+          <a href={~p"/users/register"} class="font-semibold text-[#6F8F9D] hover:underline">Create one</a>
+          to submit your question.
+        </p>
+      </div>
+    <% end %>
   </div>
 </Layouts.app>

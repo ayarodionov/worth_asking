@@ -8,7 +8,10 @@ defmodule WorthAskingWeb.UserSessionController do
     email = get_in(conn.assigns, [:current_scope, Access.key(:user), Access.key(:email)])
     form = Phoenix.Component.to_form(%{"email" => email}, as: "user")
 
-    render(conn, :new, form: form)
+    user_return_to = get_session(conn, :user_return_to) || ""
+    question_flow = String.contains?(user_return_to, "/questions/new")
+
+    render(conn, :new, form: form, question_flow: question_flow)
   end
 
   # magic link login

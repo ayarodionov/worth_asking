@@ -49,12 +49,12 @@
               Log out
             </.link>
           <% else %>
-            <a href={~p"/contributors/join"} class="text-[#6F8F6B] font-medium hover:underline transition-colors">
+            <a href={~p"/contributors/join"} class="text-[#6F8F6B] font-medium hover:underline transition-colors hidden sm:inline">
               Become a contributor
             </a>
-            <a href={~p"/users/register"} class="hover:text-[#6F8F9D] transition-colors">Sign up</a>
-            <a href={~p"/users/log-in"} class="bg-[#6F8F9D] text-white px-4 py-2 rounded-md hover:bg-[#5a7a87] transition-colors">
-              Log in
+            <a href={~p"/users/log-in"} class="hover:text-[#6F8F9D] transition-colors">Log in</a>
+            <a href="/#ask" class="bg-[#6F8F9D] text-white px-4 py-2 rounded-md hover:bg-[#5a7a87] transition-colors">
+              Ask a Question
             </a>
           <% end %>
         </div>

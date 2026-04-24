@@ -1,0 +1,95 @@
+<Layouts.flash_group flash={@flash} />
+
+<div class="max-w-lg mx-auto px-6 py-12 lg:py-16">
+  <%!-- Step indicator --%>
+  <div class="flex items-center gap-3 mb-10">
+    <div class="flex items-center gap-2">
+      <div class="w-7 h-7 rounded-full bg-[#6F8F9D] flex items-center justify-center">
+        <svg class="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
+        </svg>
+      </div>
+      <span class="text-sm text-[#6F8F9D]">Step 1: Ask your question</span>
+    </div>
+    <div class="flex-1 h-px bg-[#6F8F9D]"></div>
+    <div class="flex items-center gap-2">
+      <div class="w-7 h-7 rounded-full bg-[#6F8F9D] flex items-center justify-center">
+        <span class="text-xs font-semibold text-white">2</span>
+      </div>
+      <span class="text-sm font-medium text-[#2F2F2F]">Create your account</span>
+    </div>
+  </div>
+
+  <%!-- Header --%>
+  <header class="mb-8">
+    <h1 class="text-2xl lg:text-3xl font-semibold tracking-tight mb-2" style="font-family: Georgia, serif;">
+      You're almost there.
+    </h1>
+    <p class="text-[#2F2F2F]/60 text-sm leading-relaxed">
+      Create a free account so we can save your question and send your responses when they're ready.
+    </p>
+  </header>
+
+  <%!-- Question preview --%>
+  <div class="bg-white border border-[#E4E6E3] rounded-lg p-5 mb-8">
+    <p class="text-xs text-[#2F2F2F]/40 uppercase tracking-wider mb-2">Your question</p>
+    <p class="text-sm text-[#2F2F2F] leading-relaxed italic">"{@question}"</p>
+  </div>
+
+  <%!-- Errors --%>
+  <%= if @errors != [] do %>
+    <div class="bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg p-4 mb-6">
+      <%= for error <- @errors do %>
+        <p>{error}</p>
+      <% end %>
+    </div>
+  <% end %>
+
+  <%!-- Account creation form --%>
+  <form action={~p"/ask"} method="post" class="space-y-4">
+    <input type="hidden" name="_csrf_token" value={get_csrf_token()} />
+    <input type="hidden" name="ask[question]" value={@question} />
+
+    <div>
+      <label class="block text-sm font-medium text-[#2F2F2F] mb-1">Email</label>
+      <input
+        type="email"
+        name="ask[email]"
+        value={@email}
+        required
+        autocomplete="email"
+        class="w-full px-3 py-2.5 border border-[#E4E6E3] rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-[#6F8F9D] focus:border-[#6F8F9D]"
+      />
+    </div>
+
+    <div>
+      <label class="block text-sm font-medium text-[#2F2F2F] mb-1">Password</label>
+      <input
+        type="password"
+        name="ask[password]"
+        required
+        minlength="12"
+        autocomplete="new-password"
+        class="w-full px-3 py-2.5 border border-[#E4E6E3] rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-[#6F8F9D] focus:border-[#6F8F9D]"
+      />
+      <p class="text-xs text-[#2F2F2F]/40 mt-1">Minimum 12 characters</p>
+    </div>
+
+    <button
+      type="submit"
+      class="w-full py-3 bg-[#6F8F9D] text-white text-sm font-medium rounded-lg hover:bg-[#5a7a87] transition-colors"
+    >
+      Create Account &amp; Submit Question
+    </button>
+  </form>
+
+  <p class="text-sm text-center text-[#2F2F2F]/50 mt-6">
+    Already have an account?
+    <a href={~p"/users/log-in"} class="text-[#6F8F9D] hover:underline font-medium">Log in</a>
+    to submit this question.
+  </p>
+
+  <p class="text-xs text-center text-[#2F2F2F]/30 mt-3">
+    Your question stays anonymous. Your account is only used to manage your questions and responses.
+  </p>
+</div>
